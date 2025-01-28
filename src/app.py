@@ -60,6 +60,7 @@ def get_google_sheets_service():
                 
         except json.JSONDecodeError as e:
             logger.error("Error parsing GOOGLE_CREDENTIALS_JSON: {}".format(str(e)))
+            logger.error("GOOGLE_CREDENTIALS_JSON content: {}".format(creds_json_str[:100] + "..."))  # Log first 100 chars
             return None
         except Exception as e:
             logger.error("Error creating service: {}".format(str(e)))
