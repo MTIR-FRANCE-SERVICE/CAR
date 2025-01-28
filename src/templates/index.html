@@ -1,0 +1,743 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestion de Flotte</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/boxicons@latest/css/boxicons.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #1a1a1a;
+            --secondary: #333333;
+            --accent: #007bff;
+            --success: #28a745;
+            --danger: #dc3545;
+            --warning: #ffc107;
+            --text: #ffffff;
+            --text-secondary: #888888;
+            --background: #121212;
+            --card-bg: #1e1e1e;
+            --border: #2d2d2d;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--background);
+            color: var(--text);
+            line-height: 1.5;
+            margin: 0;
+            padding: 0;
+        }
+
+        .navbar {
+            background: var(--primary);
+            padding: 1rem 2rem;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .navbar-brand {
+            color: var(--text) !important;
+            font-size: 1.5rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .metric-card {
+            background: var(--card-bg);
+            border-radius: 10px;
+            padding: 1.5rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 1px solid var(--border);
+        }
+
+        .metric-card:hover {
+            transform: translateY(-5px);
+            border-color: var(--accent);
+        }
+
+        .metric-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--accent);
+            margin-bottom: 0.5rem;
+        }
+
+        .metric-label {
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+
+        .tables-container {
+            display: grid;
+            grid-template-columns: 320px 1fr;
+            gap: 25px;
+            margin: 25px 0;
+            padding: 0 10px;
+        }
+
+        .vehicle-categories-container {
+            margin: 0;
+            padding: 20px;
+            background: var(--card-bg);
+            border-radius: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            height: fit-content;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .vehicle-categories-container:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .vehicle-categories-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+        }
+
+        .vehicle-categories-table tr {
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .vehicle-categories-table tr:hover {
+            background: rgba(255, 255, 255, 0.05);
+            transform: scale(1.01);
+        }
+
+        .vehicle-categories-table td {
+            padding: 14px 18px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            color: var(--text);
+            font-size: 0.9rem;
+            letter-spacing: 0.3px;
+        }
+
+        .vehicle-categories-table td:last-child {
+            text-align: right;
+            font-weight: 600;
+            color: var(--accent);
+            font-size: 1rem;
+        }
+
+        .vehicle-data-container {
+            background: var(--card-bg);
+            border-radius: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+        }
+
+        .data-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+        }
+
+        .data-table th {
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--text);
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            letter-spacing: 1px;
+            padding: 16px;
+            text-align: left;
+            border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .data-table td {
+            padding: 16px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            color: var(--text);
+            font-size: 0.9rem;
+            transition: all 0.2s ease;
+        }
+
+        .data-table tbody tr {
+            transition: all 0.3s ease;
+        }
+
+        .data-table tbody tr:hover {
+            background: rgba(255, 255, 255, 0.05);
+            transform: scale(1.005);
+        }
+
+        /* Category-specific colors with more elegant transparency */
+        .category-row.flotte { background-color: rgba(0, 123, 255, 0.07); }
+        .category-row.chauffeur { background-color: rgba(40, 167, 69, 0.07); }
+        .category-row.transco { background-color: rgba(111, 66, 193, 0.07); }
+        .category-row.fs { background-color: rgba(23, 162, 184, 0.07); }
+        .category-row.mc { background-color: rgba(255, 193, 7, 0.07); }
+        .category-row.immo-fs, .category-row.immo-mc { background-color: rgba(108, 117, 125, 0.07); }
+        .category-row.dispo-fs, .category-row.dispo-mc { background-color: rgba(253, 126, 20, 0.07); }
+
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .status-badge.available {
+            background: rgba(40, 167, 69, 0.15);
+            color: #4cd964;
+            border: 1px solid rgba(40, 167, 69, 0.3);
+        }
+
+        .status-badge.maintenance {
+            background: rgba(255, 193, 7, 0.15);
+            color: #ffd60a;
+            border: 1px solid rgba(255, 193, 7, 0.3);
+        }
+
+        .status-badge.busy {
+            background: rgba(220, 53, 69, 0.15);
+            color: #ff3b30;
+            border: 1px solid rgba(220, 53, 69, 0.3);
+        }
+
+        .status-badge.france-service {
+            background-color: rgba(220, 53, 69, 0.15);
+            color: #ff4d4d;
+        }
+
+        .status-badge.mc-auto {
+            background-color: rgba(255, 193, 7, 0.15);
+            color: #ffd700;
+        }
+
+        /* Responsive Design with elegant transitions */
+        @media (max-width: 1024px) {
+            .tables-container {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+
+            .container {
+                padding: 1rem;
+            }
+
+            .stats-grid {
+                grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+                gap: 0.8rem;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .metric-card {
+                padding: 1rem;
+            }
+
+            .metric-value {
+                font-size: 1.5rem;
+            }
+
+            .metric-label {
+                font-size: 0.8rem;
+            }
+
+            .data-table th,
+            .data-table td {
+                padding: 12px 8px;
+                font-size: 0.8rem;
+            }
+
+            .navbar {
+                padding: 0.8rem 1rem;
+            }
+
+            .navbar-brand {
+                font-size: 1.2rem;
+            }
+
+            .vehicle-categories-container {
+                padding: 15px;
+            }
+
+            .vehicle-categories-table td {
+                padding: 10px;
+                font-size: 0.8rem;
+            }
+
+            .status-badge {
+                padding: 4px 8px;
+                font-size: 0.75rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .data-table {
+                display: block;
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+            }
+
+            .data-table thead {
+                white-space: nowrap;
+            }
+
+            .vehicle-data-container {
+                padding: 10px;
+            }
+
+            .search-box {
+                margin: 10px;
+            }
+
+            .search-input {
+                font-size: 0.9rem;
+                padding: 8px 35px;
+            }
+
+            .refresh-btn {
+                padding: 6px;
+                font-size: 1.1rem;
+            }
+        }
+
+        /* Amélioration du touch sur mobile */
+        @media (hover: none) {
+            .metric-card:hover {
+                transform: none;
+            }
+
+            .vehicle-categories-table tr:hover {
+                transform: none;
+            }
+
+            .data-table tbody tr:hover {
+                transform: none;
+            }
+
+            .metric-card:active,
+            .vehicle-categories-table tr:active,
+            .data-table tbody tr:active {
+                background: rgba(255, 255, 255, 0.1);
+            }
+        }
+
+        /* Scrollbar styling */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 4px;
+            transition: all 0.3s ease;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .search-box {
+            margin-bottom: 2rem;
+            position: relative;
+            max-width: 600px;
+            margin: 0 auto 2rem;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 1rem 1rem 1rem 3rem;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            background: var(--card-bg);
+            color: var(--text);
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+        }
+
+        .search-box i {
+            position: absolute;
+            left: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-secondary);
+            font-size: 1.25rem;
+        }
+
+        .category-header {
+            background: var(--accent-light);
+            color: var(--accent);
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            padding: 10px 15px;
+        }
+        .immo-header {
+            background: rgba(220, 53, 69, 0.1) !important;
+            color: #dc3545 !important;
+        }
+        .text-center {
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-dark mb-4">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="#">
+                <i class='bx bxs-car-garage'></i>
+                <span>Gestion de Flotte</span>
+                <small class="version">v1.0</small>
+            </a>
+            <div class="d-flex gap-3">
+                <a href="/point_fs" class="btn btn-outline-light">
+                    <i class='bx bx-list-check'></i>
+                    Point FS
+                </a>
+                <button class="refresh-btn" onclick="refreshDashboard()" title="Rafraîchir les données">
+                    <i class='bx bx-refresh'></i>
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <!-- Stats Grid -->
+        <div class="stats-grid">
+            <div class="metric-card" data-category="flotte">
+                <div class="metric-value" id="flotteCount">0</div>
+                <div class="metric-label">Flotte</div>
+            </div>
+            <div class="metric-card" data-category="chauffeur">
+                <div class="metric-value" id="chauffeurCount">0</div>
+                <div class="metric-label">Chauffeur</div>
+            </div>
+            <div class="metric-card" data-category="transco">
+                <div class="metric-value" id="transcoCount">0</div>
+                <div class="metric-label">Transco</div>
+            </div>
+            <div class="metric-card" data-category="disponible">
+                <div class="metric-value" id="disponibleCount">0</div>
+                <div class="metric-label">Disponible</div>
+            </div>
+            <div class="metric-card" data-category="immo">
+                <div class="metric-value" id="immoCount">0</div>
+                <div class="metric-label">IMMO</div>
+            </div>
+        </div>
+
+        <!-- Vehicle Categories Tables Container -->
+        <div class="tables-container">
+            <!-- First Table - Categories -->
+            <div class="vehicle-categories-container">
+                <table class="vehicle-categories-table">
+                    <tbody>
+                        <tr class="category-row flotte"><td>FLOTTE</td><td>130</td></tr>
+                        <tr class="category-row chauffeur"><td>CHAUFFEUR</td><td>110</td></tr>
+                        <tr class="category-row chauffeur"><td>CHAUFFEUR</td><td>108</td></tr>
+                        <tr class="category-row fs"><td>FS</td><td>96</td></tr>
+                        <tr class="category-row mc"><td>MC</td><td>12</td></tr>
+                        <tr class="category-row gestionnaire"><td>GESTIONNAIRE</td><td>1</td></tr>
+                        <tr class="category-row gratuit"><td>GRATUIT</td><td>1</td></tr>
+                        <tr class="category-row transco"><td>TRANSCO</td><td>26</td></tr>
+                        <tr class="category-row mlc"><td>MLC</td><td>0</td></tr>
+                        <tr class="category-row mc"><td>MC</td><td>13</td></tr>
+                        <tr class="category-row fc"><td>FC</td><td>13</td></tr>
+                        <tr class="category-row md"><td>MD</td><td>0</td></tr>
+                        <tr class="category-row immo-fs"><td>IMMO (FS)</td><td>0</td></tr>
+                        <tr class="category-row immo-mc"><td>IMMO (MC)</td><td>0</td></tr>
+                        <tr class="category-row dispo-fs"><td>DISPO(FS)</td><td>6</td></tr>
+                        <tr class="category-row dispo-mc"><td>DISPO(MC)</td><td>1</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Second Table - Vehicle Data -->
+            <div class="vehicle-data-container">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Type</th>
+                            <th>Immatriculation</th>
+                            <th>CUCAR</th>
+                            <th>Service</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="vehicleTableBody">
+                        <!-- Vehicle data will be populated dynamically -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Search Box -->
+        <div class="search-box">
+            <i class='bx bx-search'></i>
+            <input type="text" class="search-input" placeholder="Rechercher un véhicule...">
+        </div>
+
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+        <script>
+            let currentData = {};
+            let currentCategory = 'all';
+
+            function updateTable(category = currentCategory) {
+                currentCategory = category;
+                const tableBody = document.getElementById('vehicleTableBody');
+                let tableContent = '';
+
+                if (category === 'disponible') {
+                    // Get both FS and MC available vehicles
+                    const fsVehicles = currentData.categories.disponible_fs || [];
+                    const mcVehicles = currentData.categories.disponible_mc || [];
+
+                    // Add FS section header
+                    if (fsVehicles.length > 0) {
+                        tableContent += `
+                            <tr class="category-header">
+                                <td colspan="6">VÉHICULE DISPONIBLE FS</td>
+                            </tr>
+                        `;
+
+                        // Add FS vehicles
+                        fsVehicles.forEach(vehicle => {
+                            tableContent += `
+                                <tr>
+                                    <td>${vehicle.type || '-'}</td>
+                                    <td>${vehicle.immatriculation || '-'}</td>
+                                    <td>${vehicle.cucar || '-'}</td>
+                                    <td>FS</td>
+                                    <td>
+                                        <span class="status-badge available">Disponible</span>
+                                    </td>
+                                    <td>
+                                        <button class="btn btn-sm btn-outline-primary">
+                                            <i class="bx bx-info-circle"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                            `;
+                        });
+                    }
+
+                    // Add MC section header
+                    if (mcVehicles.length > 0) {
+                        tableContent += `
+                            <tr class="category-header">
+                                <td colspan="6">VÉHICULE DISPONIBLE MC</td>
+                            </tr>
+                        `;
+
+                        // Add MC vehicles
+                        mcVehicles.forEach(vehicle => {
+                            tableContent += `
+                                <tr>
+                                    <td>${vehicle.type || '-'}</td>
+                                    <td>${vehicle.immatriculation || '-'}</td>
+                                    <td>${vehicle.cucar || '-'}</td>
+                                    <td>MC</td>
+                                    <td>
+                                        <span class="status-badge available">Disponible</span>
+                                    </td>
+                                    <td>
+                                        <button class="btn btn-sm btn-outline-primary">
+                                            <i class="bx bx-info-circle"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                            `;
+                        });
+                    }
+
+                    if (fsVehicles.length === 0 && mcVehicles.length === 0) {
+                        tableContent = `
+                            <tr>
+                                <td colspan="6" class="text-center">Aucun véhicule disponible</td>
+                            </tr>
+                        `;
+                    }
+
+                    tableBody.innerHTML = tableContent;
+                } else if (category === 'immo') {
+                    // Get IMMO vehicles
+                    const immoVehicles = currentData.categories.immo || [];
+
+                    if (immoVehicles.length > 0) {
+                        // Add IMMO section header
+                        tableContent += `
+                            <tr class="category-header immo-header">
+                                <td colspan="6">VÉHICULE (IMMO)</td>
+                            </tr>
+                        `;
+
+                        // Add IMMO vehicles
+                        immoVehicles.forEach(vehicle => {
+                            tableContent += `
+                                <tr>
+                                    <td>${vehicle.type || '-'}</td>
+                                    <td>${vehicle.immatriculation || '-'}</td>
+                                    <td>${vehicle.cucar || '-'}</td>
+                                    <td>-</td>
+                                    <td>
+                                        <span class="status-badge maintenance">IMMO</span>
+                                    </td>
+                                    <td>
+                                        <button class="btn btn-sm btn-outline-primary">
+                                            <i class="bx bx-info-circle"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                            `;
+                        });
+                    } else {
+                        tableContent = `
+                            <tr>
+                                <td colspan="6" class="text-center">Aucun véhicule en IMMO</td>
+                            </tr>
+                        `;
+                    }
+
+                    tableBody.innerHTML = tableContent;
+                } else {
+                    // Handle other categories
+                    let vehicles = [];
+                    if (category === 'all') {
+                        Object.values(currentData.categories).forEach(categoryVehicles => {
+                            if (Array.isArray(categoryVehicles)) {
+                                vehicles = vehicles.concat(categoryVehicles);
+                            }
+                        });
+                    } else {
+                        vehicles = currentData.categories[category] || [];
+                    }
+
+                    if (vehicles.length > 0) {
+                        tableBody.innerHTML = vehicles.map(vehicle => `
+                            <tr>
+                                <td>${vehicle.type || '-'}</td>
+                                <td>${vehicle.immatriculation || '-'}</td>
+                                <td>${vehicle.cucar || '-'}</td>
+                                <td>${vehicle.service || '-'}</td>
+                                <td>
+                                    <span class="status-badge ${getStatusBadgeClass(vehicle.status || '')}">
+                                        ${vehicle.status || '-'}
+                                    </span>
+                                </td>
+                                <td>
+                                    <button class="btn btn-sm btn-outline-primary">
+                                        <i class="bx bx-info-circle"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                        `).join('');
+                    } else {
+                        tableBody.innerHTML = `
+                            <tr>
+                                <td colspan="6" class="text-center">Aucun véhicule trouvé</td>
+                            </tr>
+                        `;
+                    }
+                }
+            }
+
+            function getStatusBadgeClass(status) {
+                status = status.toLowerCase();
+                if (status.includes('disponible')) return 'available';
+                if (status.includes('immo')) return 'maintenance';
+                if (status.includes('france service')) return 'france-service';
+                if (status.includes('mc auto')) return 'mc-auto';
+                return 'busy';
+            }
+
+            async function updateDashboard() {
+                try {
+                    const response = await fetch('/api/vehicles');
+                    const data = await response.json();
+                    
+                    if (data.success) {
+                        currentData = data;
+                        
+                        // Update counts
+                        document.getElementById('flotteCount').textContent = data.stats.by_category.flotte || 0;
+                        document.getElementById('chauffeurCount').textContent = data.stats.by_category.chauffeur || 0;
+                        document.getElementById('transcoCount').textContent = data.stats.by_category.transco || 0;
+                        document.getElementById('disponibleCount').textContent = 
+                            (data.stats.by_category.disponible_fs || 0) + (data.stats.by_category.disponible_mc || 0);
+                        document.getElementById('immoCount').textContent = data.stats.by_category.immo || 0;
+
+                        // Update table
+                        updateTable();
+                    }
+                } catch (error) {
+                    console.error('Error updating dashboard:', error);
+                }
+            }
+
+            // Event Listeners
+            document.querySelectorAll('.metric-card').forEach(card => {
+                card.addEventListener('click', function() {
+                    const category = this.dataset.category;
+                    updateTable(category);
+                });
+            });
+
+            document.querySelector('.search-input').addEventListener('input', function(e) {
+                const searchTerm = e.target.value.toLowerCase();
+                const rows = document.querySelectorAll('.data-table tbody tr');
+                
+                rows.forEach(row => {
+                    const text = row.textContent.toLowerCase();
+                    row.style.display = text.includes(searchTerm) ? '' : 'none';
+                });
+            });
+
+            // Initial load
+            updateDashboard();
+            
+            // Refresh every 5 minutes
+            setInterval(updateDashboard, 300000);
+        </script>
+    </div>
+</body>
+</html>
