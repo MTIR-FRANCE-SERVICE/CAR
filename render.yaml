@@ -11,3 +11,7 @@ services:
         sync: false
       - key: SECRET_KEY
         generateValue: true
+      - key: LOG_LEVEL
+        value: INFO
+      - key: GOOGLE_CREDENTIALS_JSON
+        sync: false

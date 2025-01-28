@@ -12,12 +12,11 @@ import json
 import re
 
 # Set up logging
-logging.basicConfig(level=logging.DEBUG, 
-                   format='%(asctime)s - %(levelname)s - %(message)s',
-                   handlers=[
-                       logging.FileHandler('logs/app.log'),  # Log to a file
-                       logging.StreamHandler()  # Log to console
-                   ])
+logging.basicConfig(
+    level=logging.getLevelName(os.getenv('LOG_LEVEL', 'INFO')),
+    format='%(asctime)s - %(levelname)s - %(message)s',
+    handlers=[logging.StreamHandler()]  # Log to stdout for cloud deployment
+)
 logger = logging.getLogger(__name__)
 
 # Load environment variables
