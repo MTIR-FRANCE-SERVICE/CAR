@@ -25,43 +25,42 @@ load_dotenv()
 app = Flask(__name__, static_folder='static', template_folder='templates')
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'your-secret-key')
 
-# Google Sheets API setup
+# If GOOGLE_CREDENTIALS_JSON is set in environment, use it
 SCOPES = ['https://www.googleapis.com/auth/spreadsheets']
 SPREADSHEET_ID = os.getenv('SPREADSHEET_ID')
 logger.debug(f"Using Spreadsheet ID: {SPREADSHEET_ID}")
 
-# Add a new line here to separate the logger.debug statement from the import statement
-
-from google.oauth2.credentials import Credentials
-
 def get_google_sheets_service():
     try:
-        credentials_path = os.path.abspath('src/config/credentials.json')
-        logger.debug("Looking for credentials at: {}".format(credentials_path))
-        
-        if not os.path.exists(credentials_path):
-            logger.error("Credentials file not found at {}".format(credentials_path))
+        # Get credentials from environment variable
+        creds_json_str = os.getenv('GOOGLE_CREDENTIALS_JSON')
+        if not creds_json_str:
+            logger.error("GOOGLE_CREDENTIALS_JSON environment variable not found")
             return None
 
         try:
-            with open(credentials_path, 'r') as f:
-                creds_json = json.load(f)
-                service_email = creds_json.get('client_email')
-                project_id = creds_json.get('project_id')
-                logger.debug("Service account email: {}".format(service_email))
-                logger.debug("Project ID: {}".format(project_id))
+            # Parse the JSON string
+            creds_json = json.loads(creds_json_str)
+            service_email = creds_json.get('client_email')
+            project_id = creds_json.get('project_id')
+            logger.debug("Service account email: {}".format(service_email))
+            logger.debug("Project ID: {}".format(project_id))
 
-            creds = service_account.Credentials.from_service_account_file(
-                credentials_path, 
+            # Create credentials from JSON dict
+            creds = service_account.Credentials.from_service_account_info(
+                creds_json,
                 scopes=SCOPES
             )
             logger.debug("Successfully created credentials object")
             
             service = build('sheets', 'v4', credentials=creds)
-            logger.debug("Successfully built sheets service")
+            logger.info("Successfully connected to Google Sheets API")
             
             return service
                 
+        except json.JSONDecodeError as e:
+            logger.error("Error parsing GOOGLE_CREDENTIALS_JSON: {}".format(str(e)))
+            return None
         except Exception as e:
             logger.error("Error creating service: {}".format(str(e)))
             logger.error(traceback.format_exc())
