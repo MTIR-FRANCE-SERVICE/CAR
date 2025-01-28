@@ -208,14 +208,15 @@ def parse_vehicle_with_immat(cell_value):
 
 def get_sheet_names(service, spreadsheet_id):
     try:
-        # Get spreadsheet metadata
-        spreadsheet = service.spreadsheets().get(spreadsheetId=spreadsheet_id).execute()
-        sheets = spreadsheet.get('sheets', [])
+        logger.info(f"Attempting to get sheet names for spreadsheet: {spreadsheet_id}")
+        result = service.spreadsheets().get(spreadsheetId=spreadsheet_id).execute()
+        sheets = result.get('sheets', [])
         sheet_names = [sheet['properties']['title'] for sheet in sheets]
-        logger.debug("Available sheets: {}".format(sheet_names))
+        logger.info(f"Found sheets: {sheet_names}")
         return sheet_names
     except Exception as e:
-        logger.error("Error getting sheet names: {}".format(str(e)))
+        logger.error(f"Error getting sheet names: {str(e)}")
+        logger.error(traceback.format_exc())
         return []
 
 @app.route('/')
@@ -225,10 +226,15 @@ def index():
 @app.route('/api/dashboard-data')
 def get_dashboard_data():
     try:
+        logger.info("Starting dashboard data fetch")
         service = get_google_sheets_service()
         if not service:
-            logger.error("No service available")
-            return jsonify({'error': 'Failed to initialize Google Sheets service'})
+            logger.error("Could not initialize Google Sheets service")
+            return jsonify({'error': 'Failed to initialize service'}), 500
+
+        logger.info(f"Using spreadsheet ID: {SPREADSHEET_ID}")
+        sheet_names = get_sheet_names(service, SPREADSHEET_ID)
+        logger.info(f"Available sheets: {sheet_names}")
 
         try:
             logger.debug("Fetching data from Point FS sheet...")
