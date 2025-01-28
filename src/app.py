@@ -237,17 +237,17 @@ def get_dashboard_data():
         logger.info(f"Available sheets: {sheet_names}")
 
         try:
-            logger.debug("Fetching data from Point FS sheet...")
+            logger.info("Fetching data from Point FS sheet...")
             result = service.spreadsheets().values().get(
                 spreadsheetId=SPREADSHEET_ID,
                 range="'Point FS'!A1:B50",
                 valueRenderOption='UNFORMATTED_VALUE'
             ).execute()
             values = result.get('values', [])
-            logger.debug("Got {} rows from Point FS sheet".format(len(values)))
-            logger.debug("First few rows: {}".format(values[:3] if values else 'No data'))
-
+            logger.info(f"Raw data from sheet: {values[:5] if values else 'No data'}")
+            
             if not values:
+                logger.warning("No data found in the sheet")
                 return jsonify({
                     'active_drivers': 0,
                     'total_vehicles': 0,
@@ -259,17 +259,10 @@ def get_dashboard_data():
                         'DISPONIBLE': 0
                     },
                     'status': {
-                        'MC': 0,
-                        'FC': 0,
-                        'FRANCE_SERV': 0
-                    },
-                    'vehicle_types': [],
-                    'weekly_departures': 0,
-                    'daily_departures': 0,
-                    'weekly_stops': 0,
-                    'daily_stops': 0,
-                    'ca_semaine': 0,
-                    'ca_jour': 0
+                        'En service': 0,
+                        'Disponible': 0,
+                        'En panne': 0
+                    }
                 })
 
             dashboard_data = parse_point_fs_data(values)
@@ -289,17 +282,10 @@ def get_dashboard_data():
                     'DISPONIBLE': 0
                 },
                 'status': {
-                    'MC': 0,
-                    'FC': 0,
-                    'FRANCE_SERV': 0
-                },
-                'vehicle_types': [],
-                'weekly_departures': 0,
-                'daily_departures': 0,
-                'weekly_stops': 0,
-                'daily_stops': 0,
-                'ca_semaine': 0,
-                'ca_jour': 0
+                    'En service': 0,
+                    'Disponible': 0,
+                    'En panne': 0
+                }
             })
 
     except Exception as e:
