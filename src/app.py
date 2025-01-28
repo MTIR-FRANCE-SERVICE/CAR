@@ -39,42 +39,40 @@ logger.debug(f"Using Spreadsheet ID: {SPREADSHEET_ID}")
 def get_google_sheets_service():
     try:
         # Get credentials from environment variable
-        creds_json_str = os.getenv('GOOGLE_CREDENTIALS_JSON')
-        if not creds_json_str:
-            logger.error("GOOGLE_CREDENTIALS_JSON environment variable not found")
+        credentials_json = os.getenv('GOOGLE_CREDENTIALS_JSON')
+        if not credentials_json:
+            logger.error("GOOGLE_CREDENTIALS_JSON environment variable not set")
             return None
+
+        logger.info("GOOGLE_CREDENTIALS_JSON is set")
+        logger.debug(f"First 50 chars of credentials: {credentials_json[:50]}...")
 
         try:
-            # Parse the JSON string
-            creds_json = json.loads(creds_json_str)
-            service_email = creds_json.get('client_email')
-            project_id = creds_json.get('project_id')
-            logger.debug("Service account email: {}".format(service_email))
-            logger.debug("Project ID: {}".format(project_id))
-
-            # Create credentials from JSON dict
-            creds = service_account.Credentials.from_service_account_info(
-                creds_json,
-                scopes=SCOPES
-            )
-            logger.debug("Successfully created credentials object")
-            
-            service = build('sheets', 'v4', credentials=creds)
-            logger.info("Successfully connected to Google Sheets API")
-            
-            return service
-                
-        except json.JSONDecodeError as e:
-            logger.error("Error parsing GOOGLE_CREDENTIALS_JSON: {}".format(str(e)))
-            logger.error("GOOGLE_CREDENTIALS_JSON content: {}".format(creds_json_str[:100] + "..."))  # Log first 100 chars
-            return None
+            creds_dict = json.loads(credentials_json)
+            logger.info("Successfully parsed credentials JSON")
         except Exception as e:
-            logger.error("Error creating service: {}".format(str(e)))
-            logger.error(traceback.format_exc())
+            logger.error(f"Error parsing GOOGLE_CREDENTIALS_JSON: {str(e)}")
             return None
+
+        service_email = creds_dict.get('client_email')
+        project_id = creds_dict.get('project_id')
+        logger.info(f"Service account email: {service_email}")
+        logger.info(f"Project ID: {project_id}")
+
+        # Create credentials from the dictionary
+        creds = service_account.Credentials.from_service_account_info(
+            creds_dict,
+            scopes=SCOPES
+        )
+        logger.info("Successfully created credentials object")
+        
+        service = build('sheets', 'v4', credentials=creds)
+        logger.info("Successfully built sheets service")
+        
+        return service
             
     except Exception as e:
-        logger.error("Error in get_google_sheets_service: {}".format(str(e)))
+        logger.error(f"Error in get_google_sheets_service: {str(e)}")
         logger.error(traceback.format_exc())
         return None
 
@@ -232,72 +230,41 @@ def index():
 @app.route('/api/dashboard-data')
 def get_dashboard_data():
     try:
-        logger.info("Starting dashboard data fetch")
+        logger.info("Starting get_dashboard_data")
         service = get_google_sheets_service()
         if not service:
-            logger.error("Could not initialize Google Sheets service")
-            return jsonify({'error': 'Failed to initialize service'}), 500
+            logger.error("Failed to get Google Sheets service")
+            return jsonify({'error': 'Failed to initialize Google Sheets service'}), 500
 
-        logger.info(f"Using spreadsheet ID: {SPREADSHEET_ID}")
-        sheet_names = get_sheet_names(service, SPREADSHEET_ID)
-        logger.info(f"Available sheets: {sheet_names}")
+        logger.info("Fetching data from sheet")
+        result = service.spreadsheets().values().get(
+            spreadsheetId=SPREADSHEET_ID,
+            range="'Point FS'!A1:B50",
+            valueRenderOption='UNFORMATTED_VALUE'
+        ).execute()
+        logger.info(f"Data fetched successfully: {result}")
 
-        try:
-            logger.info("Fetching data from Point FS sheet...")
-            result = service.spreadsheets().values().get(
-                spreadsheetId=SPREADSHEET_ID,
-                range="'Point FS'!A1:B50",
-                valueRenderOption='UNFORMATTED_VALUE'
-            ).execute()
-            values = result.get('values', [])
-            logger.info(f"Raw data from sheet: {values[:5] if values else 'No data'}")
-            
-            if not values:
-                logger.warning("No data found in the sheet")
-                return jsonify({
-                    'active_drivers': 0,
-                    'total_vehicles': 0,
-                    'available_vehicles': 0,
-                    'categories': {
-                        'FLOTTE': 0,
-                        'CHAUFFEUR': 0,
-                        'TRANSCO': 0,
-                        'DISPONIBLE': 0
-                    },
-                    'status': {
-                        'En service': 0,
-                        'Disponible': 0,
-                        'En panne': 0
-                    }
+        values = result.get('values', [])
+        if not values:
+            logger.warning("No data found in sheet")
+            return jsonify({'error': 'No data found'}), 404
+
+        logger.info(f"Processing {len(values)} rows of data")
+        data = []
+        for row in values:
+            if len(row) >= 2:
+                data.append({
+                    'name': str(row[0]),
+                    'value': row[1]
                 })
-
-            dashboard_data = parse_point_fs_data(values)
-            return jsonify(dashboard_data)
-
-        except Exception as e:
-            logger.error("Error getting Point FS data: {}".format(str(e)))
-            logger.error(traceback.format_exc())
-            return jsonify({
-                'active_drivers': 0,
-                'total_vehicles': 0,
-                'available_vehicles': 0,
-                'categories': {
-                    'FLOTTE': 0,
-                    'CHAUFFEUR': 0,
-                    'TRANSCO': 0,
-                    'DISPONIBLE': 0
-                },
-                'status': {
-                    'En service': 0,
-                    'Disponible': 0,
-                    'En panne': 0
-                }
-            })
+        logger.info(f"Processed data: {data}")
+        
+        return jsonify(data)
 
     except Exception as e:
-        logger.error("Error in get_dashboard_data: {}".format(str(e)))
+        logger.error(f"Error in get_dashboard_data: {str(e)}")
         logger.error(traceback.format_exc())
-        return jsonify({'error': str(e)})
+        return jsonify({'error': str(e)}), 500
 
 @app.route('/api/vehicles')
 def get_vehicles():
