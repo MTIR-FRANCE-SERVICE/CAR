@@ -11,6 +11,9 @@ import traceback
 import json
 import re
 
+# Load environment variables
+load_dotenv()
+
 # Set up logging
 logging.basicConfig(
     level=logging.getLevelName(os.getenv('LOG_LEVEL', 'INFO')),
@@ -19,8 +22,11 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-# Load environment variables
-load_dotenv()
+# Print environment variables for debugging
+logger.info("Environment variables check:")
+logger.info(f"SPREADSHEET_ID: {'Set' if os.getenv('SPREADSHEET_ID') else 'Not set'}")
+logger.info(f"GOOGLE_CREDENTIALS_JSON: {'Set' if os.getenv('GOOGLE_CREDENTIALS_JSON') else 'Not set'}")
+logger.info(f"LOG_LEVEL: {os.getenv('LOG_LEVEL', 'Not set')}")
 
 app = Flask(__name__, static_folder='static', template_folder='templates')
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'your-secret-key')
