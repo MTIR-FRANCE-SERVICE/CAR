@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, jsonify
+from flask import Flask, jsonify, render_template, request, redirect, url_for, send_from_directory
 from google.oauth2.credentials import Credentials
 from google.oauth2 import service_account
 from googleapiclient.discovery import build
@@ -48,7 +48,10 @@ def get_google_sheets_service():
         logger.debug(f"First 50 chars of credentials: {credentials_json[:50]}...")
 
         try:
+            # Convert string to bytes for the private key
             creds_dict = json.loads(credentials_json)
+            if 'private_key' in creds_dict:
+                creds_dict['private_key'] = creds_dict['private_key'].encode('utf-8')
             logger.info("Successfully parsed credentials JSON")
         except Exception as e:
             logger.error(f"Error parsing GOOGLE_CREDENTIALS_JSON: {str(e)}")
