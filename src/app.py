@@ -310,7 +310,7 @@ def get_vehicles():
                 "'VÉHICULE'!G2:I1000",  # Transco
                 "'VÉHICULE'!N2:N1000",  # Disponible FS
                 "'VÉHICULE'!Q2:Q1000",  # Disponible MC
-                "'VÉHICULE'!T2:T1000"   # IMMO
+                "'VÉHICULE'!T2:U1000"   # IMMO (Type et Immatriculation)
             ]
             
             try:
@@ -398,12 +398,13 @@ def get_vehicles():
                                 'category': 'disponible_mc'
                             })
 
-            # Process IMMO (T)
+            # Process IMMO (T:U)
             if len(valueRanges) > 5 and valueRanges[5].get('values'):
                 for row in valueRanges[5]['values']:
-                    if row and row[0] and str(row[0]).strip() != '0':
-                        vehicle_type, immat = parse_vehicle_with_immat(str(row[0]))
-                        if vehicle_type and immat:
+                    if row and len(row) >= 2 and row[0] and row[1]:  # Vérifie les colonnes T et U
+                        vehicle_type = str(row[0])
+                        immat = str(row[1])
+                        if vehicle_type and immat and vehicle_type.strip() != '0' and immat.strip() != '0':
                             categories['immo'].append({
                                 'type': vehicle_type,
                                 'immatriculation': immat,
