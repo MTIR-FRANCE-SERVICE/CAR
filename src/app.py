@@ -558,43 +558,50 @@ def favicon():
     return send_from_directory(os.path.join(app.root_path, 'static'),
                              'favicon.ico', mimetype='image/vnd.microsoft.icon')
 
-def get_immo_data():
+@app.route('/api/immo')
+def get_immo():
     try:
         service = get_google_sheets_service()
         if not service:
-            return jsonify({'error': 'Failed to connect to Google Sheets'}), 500
+            logger.error("No service available")
+            return jsonify({'error': 'Service not available'})
 
+        # Get IMMO data specifically from T2:U55
         range_name = 'VÉHICULE!T2:U55'
-        result = service.spreadsheets().values().get(
-            spreadsheetId=SPREADSHEET_ID,
-            range=range_name
-        ).execute()
-        
+        try:
+            result = service.spreadsheets().values().get(
+                spreadsheetId=SPREADSHEET_ID,
+                range=range_name,
+                valueRenderOption='FORMATTED_VALUE'
+            ).execute()
+        except Exception as api_error:
+            logger.error("API Error: {}".format(str(api_error)))
+            return jsonify({'error': 'API Error: {}'.format(str(api_error))})
+
         values = result.get('values', [])
         if not values:
             return jsonify({'count': 0, 'data': []})
 
+        immo_count = 0
         immo_data = []
+
         for row in values:
-            if len(row) >= 2:  # Ensure we have both columns
+            if row and len(row) >= 1 and row[0].strip():  # Check if we have data in first column
+                immo_count += 1
                 immo_data.append({
-                    'vehicle': row[0] if len(row) > 0 else '',
+                    'vehicle': row[0],
                     'status': row[1] if len(row) > 1 else ''
                 })
 
         return jsonify({
-            'count': len(immo_data),
+            'count': immo_count,
             'data': immo_data
         })
 
     except Exception as e:
-        logger.error(f"Error in get_immo_data: {str(e)}")
+        logger.error("Error in get_immo: {}".format(str(e)))
         logger.error(traceback.format_exc())
-        return jsonify({'error': str(e)}), 500
-
-@app.route('/api/immo')
-def immo():
-    return get_immo_data()
+        return jsonify({'error': str(e)})
 
 if __name__ == '__main__':
     # Test connection on startup
