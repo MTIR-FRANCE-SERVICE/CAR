@@ -603,6 +603,83 @@ def get_immo():
         logger.error(traceback.format_exc())
         return jsonify({'error': str(e)})
 
+@app.route('/api/dashboard')
+def get_dashboard():
+    try:
+        service = get_google_sheets_service()
+        if not service:
+            return jsonify({'error': 'Failed to connect to Google Sheets'}), 500
+
+        # Get all data from VÉHICULE sheet
+        range_name = 'VÉHICULE!A2:U1000'  # Updated to include all needed columns A through U
+        try:
+            result = service.spreadsheets().values().get(
+                spreadsheetId=SPREADSHEET_ID,
+                range=range_name,
+                valueRenderOption='FORMATTED_VALUE'
+            ).execute()
+            logger.debug(f"Successfully fetched data from {range_name}")
+        except Exception as api_error:
+            logger.error(f"Error fetching data from {range_name}: {str(api_error)}")
+            return jsonify({'error': f'API Error: {str(api_error)}'}), 500
+
+        values = result.get('values', [])
+        if not values:
+            logger.warning("No data found in VÉHICULE sheet")
+            return jsonify({
+                'flotte': 0,
+                'chauffeur': 0,
+                'transco': 0,
+                'disponible': 0,
+                'immo': 0
+            })
+
+        # Initialize counters
+        stats = {
+            'flotte': 0,
+            'chauffeur': 0,
+            'transco': 0,
+            'disponible': 0,
+            'immo': 0
+        }
+
+        # Process each row
+        for row in values:
+            try:
+                # Flotte vehicles (columns A-C)
+                if len(row) >= 3 and row[0] and row[1]:  # Check columns A and B
+                    stats['flotte'] += 1
+                
+                # Chauffeur vehicles (columns D-F)
+                if len(row) >= 6 and row[3] and row[4]:  # Check columns D and E
+                    stats['chauffeur'] += 1
+                
+                # Transco vehicles (columns G-I)
+                if len(row) >= 9 and row[6] and row[7]:  # Check columns G and H
+                    stats['transco'] += 1
+
+                # Disponible vehicles (columns N and Q)
+                if len(row) >= 14 and row[13] and str(row[13]).strip() != '0':  # Column N
+                    stats['disponible'] += 1
+                if len(row) >= 17 and row[16] and str(row[16]).strip() != '0':  # Column Q
+                    stats['disponible'] += 1
+
+                # IMMO vehicles (columns T-U)
+                if len(row) >= 21 and row[19] and row[20]:  # Check both T and U columns
+                    stats['immo'] += 1
+
+            except Exception as row_error:
+                logger.error(f"Error processing row: {str(row_error)}")
+                continue
+
+        logger.info(f"Dashboard stats: {stats}")
+        return jsonify(stats)
+
+    except Exception as e:
+        logger.error(f"Error in get_dashboard: {str(e)}")
+        logger.error(traceback.format_exc())
+        return jsonify({'error': str(e)}), 500
+
 if __name__ == '__main__':
     # Test connection on startup
     service = get_google_sheets_service()
