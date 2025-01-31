@@ -10,6 +10,8 @@ import logging
 import traceback
 import json
 import re
+from functools import lru_cache
+from datetime import datetime, timedelta
 
 # Load environment variables
 load_dotenv()
@@ -226,6 +228,24 @@ def get_sheet_names(service, spreadsheet_id):
         logger.error(traceback.format_exc())
         return []
 
+last_fetch_time = None
+cached_vehicles_data = None
+
+def get_cached_vehicles_data():
+    global last_fetch_time, cached_vehicles_data
+    
+    # If we have cached data and it's less than 30 seconds old, return it
+    if last_fetch_time and cached_vehicles_data:
+        if datetime.now() - last_fetch_time < timedelta(seconds=30):
+            return cached_vehicles_data
+    
+    return None
+
+def set_cached_vehicles_data(data):
+    global last_fetch_time, cached_vehicles_data
+    last_fetch_time = datetime.now()
+    cached_vehicles_data = data
+
 @app.route('/')
 def index():
     return render_template('index.html')
@@ -272,33 +292,44 @@ def get_dashboard_data():
 @app.route('/api/vehicles')
 def get_vehicles():
     try:
+        # Check cache first
+        cached_data = get_cached_vehicles_data()
+        if cached_data:
+            return jsonify(cached_data)
+
         service = get_google_sheets_service()
         if not service:
             logger.error("No service available")
             return jsonify({'error': 'Service not available'})
 
         try:
-            # Get all data from VÉHICULE sheet
-            range_name = "'VÉHICULE'!A1:Z1000"
-            logger.debug("Fetching data from range: {}".format(range_name))
+            # Get only the needed columns
+            ranges = [
+                "'VÉHICULE'!A2:C1000",  # Flotte
+                "'VÉHICULE'!D2:F1000",  # Chauffeur
+                "'VÉHICULE'!G2:I1000",  # Transco
+                "'VÉHICULE'!N2:N1000",  # Disponible FS
+                "'VÉHICULE'!Q2:Q1000",  # Disponible MC
+                "'VÉHICULE'!T2:T1000"   # IMMO
+            ]
             
             try:
-                result = service.spreadsheets().values().get(
+                result = service.spreadsheets().values().batchGet(
                     spreadsheetId=SPREADSHEET_ID,
-                    range=range_name,
+                    ranges=ranges,
                     valueRenderOption='FORMATTED_VALUE'
                 ).execute()
-                logger.debug("API Response: {}".format(result))
+                
+                valueRanges = result.get('valueRanges', [])
+                if not valueRanges:
+                    logger.error("No data found in sheet")
+                    return jsonify({'error': 'No data found'})
+                
             except Exception as api_error:
                 logger.error("API Error: {}".format(str(api_error)))
                 return jsonify({'error': 'API Error: {}'.format(str(api_error))})
 
-            values = result.get('values', [])
-            if not values:
-                logger.error("No data found in sheet")
-                return jsonify({'error': 'No data found'})
-
-            # Initialize categories and stats
+            # Initialize categories
             categories = {
                 'flotte': [],
                 'chauffeur': [],
@@ -306,154 +337,89 @@ def get_vehicles():
                 'disponible_fs': [],
                 'disponible_mc': [],
                 'immo': [],
-                'gestionnaire': [],
-                'gratuit': []
             }
             
-            stats = {
-                'total': 0,
-                'by_type': {},
-                'by_category': {},
-                'by_status': {}
-            }
-
-            # Process each section
-            for row_index, row in enumerate(values[1:], start=1):  # Skip header row
-                try:
-                    # Flotte vehicles (columns A-C)
-                    if len(row) >= 3 and row[0] and row[1]:
-                        vehicle = {
+            # Process Flotte (A:C)
+            if len(valueRanges) > 0 and valueRanges[0].get('values'):
+                for row in valueRanges[0]['values']:
+                    if row and len(row) >= 2 and row[0] and row[1]:
+                        categories['flotte'].append({
                             'type': str(row[0]),
                             'immatriculation': str(row[1]),
                             'status': str(row[2]) if len(row) > 2 else '',
                             'category': 'flotte'
-                        }
-                        categories['flotte'].append(vehicle)
-                        stats['total'] += 1
-                        stats['by_type'][vehicle['type']] = stats['by_type'].get(vehicle['type'], 0) + 1
-                        stats['by_category']['flotte'] = stats['by_category'].get('flotte', 0) + 1
-                        if vehicle['status']:
-                            stats['by_status'][vehicle['status']] = stats['by_status'].get(vehicle['status'], 0) + 1
+                        })
 
-                    # Disponible FS vehicles (column N)
-                    if len(row) >= 14 and row[13] and str(row[13]).strip() != '0':
-                        vehicle_type, immat = parse_vehicle_with_immat(str(row[13]))
+            # Process Chauffeur (D:F)
+            if len(valueRanges) > 1 and valueRanges[1].get('values'):
+                for row in valueRanges[1]['values']:
+                    if row and len(row) >= 2 and row[0] and row[1]:
+                        categories['chauffeur'].append({
+                            'type': str(row[0]),
+                            'immatriculation': str(row[1]),
+                            'status': str(row[2]) if len(row) > 2 else '',
+                            'category': 'chauffeur'
+                        })
+
+            # Process Transco (G:I)
+            if len(valueRanges) > 2 and valueRanges[2].get('values'):
+                for row in valueRanges[2]['values']:
+                    if row and len(row) >= 2 and row[0] and row[1]:
+                        categories['transco'].append({
+                            'type': str(row[0]),
+                            'immatriculation': str(row[1]),
+                            'status': str(row[2]) if len(row) > 2 else '',
+                            'category': 'transco'
+                        })
+
+            # Process Disponible FS (N)
+            if len(valueRanges) > 3 and valueRanges[3].get('values'):
+                for row in valueRanges[3]['values']:
+                    if row and row[0] and str(row[0]).strip() != '0':
+                        vehicle_type, immat = parse_vehicle_with_immat(str(row[0]))
                         if vehicle_type and immat:
-                            vehicle = {
+                            categories['disponible_fs'].append({
                                 'type': vehicle_type,
                                 'immatriculation': immat,
-                                'cucar': '',
                                 'status': 'Disponible FS',
                                 'category': 'disponible_fs'
-                            }
-                            categories['disponible_fs'].append(vehicle)
-                            stats['total'] += 1
-                            stats['by_type'][vehicle_type] = stats['by_type'].get(vehicle_type, 0) + 1
-                            stats['by_category']['disponible_fs'] = stats['by_category'].get('disponible_fs', 0) + 1
+                            })
 
-                    # Disponible MC vehicles (column Q)
-                    if len(row) >= 17 and row[16] and str(row[16]).strip() != '0':
-                        vehicle_type, immat = parse_vehicle_with_immat(str(row[16]))
+            # Process Disponible MC (Q)
+            if len(valueRanges) > 4 and valueRanges[4].get('values'):
+                for row in valueRanges[4]['values']:
+                    if row and row[0] and str(row[0]).strip() != '0':
+                        vehicle_type, immat = parse_vehicle_with_immat(str(row[0]))
                         if vehicle_type and immat:
-                            vehicle = {
+                            categories['disponible_mc'].append({
                                 'type': vehicle_type,
                                 'immatriculation': immat,
-                                'cucar': '',
                                 'status': 'Disponible MC',
                                 'category': 'disponible_mc'
-                            }
-                            categories['disponible_mc'].append(vehicle)
-                            stats['total'] += 1
-                            stats['by_type'][vehicle_type] = stats['by_type'].get(vehicle_type, 0) + 1
-                            stats['by_category']['disponible_mc'] = stats['by_category'].get('disponible_mc', 0) + 1
+                            })
 
-                    # IMMO vehicles (column T)
-                    if len(row) >= 20 and row[19] and str(row[19]).strip() != '0':
-                        vehicle_type, immat = parse_vehicle_with_immat(str(row[19]))
+            # Process IMMO (T)
+            if len(valueRanges) > 5 and valueRanges[5].get('values'):
+                for row in valueRanges[5]['values']:
+                    if row and row[0] and str(row[0]).strip() != '0':
+                        vehicle_type, immat = parse_vehicle_with_immat(str(row[0]))
                         if vehicle_type and immat:
-                            vehicle = {
+                            categories['immo'].append({
                                 'type': vehicle_type,
                                 'immatriculation': immat,
-                                'cucar': '',
-                                'service': '',
                                 'status': 'IMMO',
                                 'category': 'immo'
-                            }
-                            categories['immo'].append(vehicle)
-                            stats['total'] += 1
-                            stats['by_type'][vehicle_type] = stats['by_type'].get(vehicle_type, 0) + 1
-                            stats['by_category']['immo'] = stats['by_category'].get('immo', 0) + 1
+                            })
 
-                    # Chauffeur vehicles (columns D-F)
-                    if len(row) >= 6 and row[3] and row[4]:
-                        vehicle = {
-                            'type': str(row[3]),
-                            'immatriculation': str(row[4]),
-                            'status': str(row[5]) if len(row) > 5 else '',
-                            'category': 'chauffeur'
-                        }
-                        categories['chauffeur'].append(vehicle)
-                        stats['total'] += 1
-                        stats['by_type'][vehicle['type']] = stats['by_type'].get(vehicle['type'], 0) + 1
-                        stats['by_category']['chauffeur'] = stats['by_category'].get('chauffeur', 0) + 1
-                        if vehicle['status']:
-                            stats['by_status'][vehicle['status']] = stats['by_status'].get(vehicle['status'], 0) + 1
-
-                    # Transco vehicles (columns G-I)
-                    if len(row) >= 9 and row[6] and row[7]:
-                        vehicle = {
-                            'type': str(row[6]),
-                            'immatriculation': str(row[7]),
-                            'status': str(row[8]) if len(row) > 8 else '',
-                            'category': 'transco'
-                        }
-                        categories['transco'].append(vehicle)
-                        stats['total'] += 1
-                        stats['by_type'][vehicle['type']] = stats['by_type'].get(vehicle['type'], 0) + 1
-                        stats['by_category']['transco'] = stats['by_category'].get('transco', 0) + 1
-                        if vehicle['status']:
-                            stats['by_status'][vehicle['status']] = stats['by_status'].get(vehicle['status'], 0) + 1
-
-                    # Gestionnaire vehicles (columns T-V)
-                    if len(row) >= 22 and row[19]:
-                        vehicle = {
-                            'type': str(row[19]),
-                            'immatriculation': str(row[20]) if len(row) > 20 else '',
-                            'status': 'Gestionnaire',
-                            'category': 'gestionnaire'
-                        }
-                        categories['gestionnaire'].append(vehicle)
-                        stats['total'] += 1
-                        stats['by_type'][vehicle['type']] = stats['by_type'].get(vehicle['type'], 0) + 1
-                        stats['by_category']['gestionnaire'] = stats['by_category'].get('gestionnaire', 0) + 1
-
-                    # Gratuit vehicles (columns W-Y)
-                    if len(row) >= 25 and row[22]:
-                        vehicle = {
-                            'type': str(row[22]),
-                            'immatriculation': str(row[23]) if len(row) > 23 else '',
-                            'status': 'Gratuit',
-                            'category': 'gratuit'
-                        }
-                        categories['gratuit'].append(vehicle)
-                        stats['total'] += 1
-                        stats['by_type'][vehicle['type']] = stats['by_type'].get(vehicle['type'], 0) + 1
-                        stats['by_category']['gratuit'] = stats['by_category'].get('gratuit', 0) + 1
-
-                except Exception as row_error:
-                    logger.error("Error processing row {}: {}".format(row, str(row_error)))
-                    continue
-
-            # Add debug logging
-            logger.debug("Disponible MC vehicles:")
-            for vehicle in categories['disponible_mc']:
-                logger.debug("  {}".format(vehicle))
-
-            return jsonify({
+            response_data = {
                 'categories': categories,
-                'stats': stats,
                 'success': True
-            })
+            }
+
+            # Cache the response
+            set_cached_vehicles_data(response_data)
+
+            return jsonify(response_data)
 
         except Exception as e:
             logger.error("Error getting vehicle data: {}".format(str(e)))
