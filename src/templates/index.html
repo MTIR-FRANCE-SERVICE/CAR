@@ -59,31 +59,64 @@
         }
 
         .metric-card {
-            background: var(--card-bg);
+            background: #2a2a2a;
             border-radius: 10px;
-            padding: 1.5rem;
+            padding: 20px;
             text-align: center;
             cursor: pointer;
             transition: all 0.3s ease;
-            border: 1px solid var(--border);
+            border: 2px solid transparent;
         }
 
         .metric-card:hover {
             transform: translateY(-5px);
-            border-color: var(--accent);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .metric-card.active {
+            border-color: #007bff;
+            background: #353535;
         }
 
         .metric-value {
-            font-size: 2rem;
-            font-weight: 700;
-            color: var(--accent);
-            margin-bottom: 0.5rem;
+            font-size: 2em;
+            font-weight: bold;
+            color: #007bff;
+            margin-bottom: 5px;
         }
 
         .metric-label {
-            color: var(--text-secondary);
-            font-size: 0.875rem;
+            color: #ffffff;
+            font-size: 0.9em;
+        }
+
+        .badge {
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 0.85em;
             font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .badge-disponible-fs {
+            background-color: #28a745;
+            color: white;
+        }
+
+        .badge-disponible-mc {
+            background-color: #007bff;
+            color: white;
+        }
+
+        .badge-immo {
+            background-color: #dc3545;
+            color: white;
+        }
+
+        .badge-secondary {
+            background-color: #6c757d;
+            color: white;
         }
 
         .tables-container {
@@ -417,6 +450,77 @@
         .text-center {
             text-align: center;
         }
+        
+        .badge {
+            display: inline-block;
+            padding: 0.25em 0.4em;
+            font-size: 75%;
+            font-weight: 700;
+            line-height: 1;
+            text-align: center;
+            white-space: nowrap;
+            vertical-align: baseline;
+            border-radius: 0.25rem;
+            transition: color 0.15s ease-in-out, background-color 0.15s ease-in-out, border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+        }
+        
+        .badge-disponible-fs {
+            background-color: #28a745;
+            color: #fff;
+        }
+        
+        .badge-disponible-mc {
+            background-color: #007bff;
+            color: #fff;
+        }
+        
+        .badge-immo {
+            background-color: #dc3545;
+            color: #fff;
+        }
+        
+        .badge-secondary {
+            background-color: #6c757d;
+            color: #fff;
+        }
+        
+        .table {
+            margin-top: 20px;
+            background: #2a2a2a;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .table th {
+            background: #353535;
+            color: #ffffff;
+            font-weight: 500;
+            text-transform: uppercase;
+            font-size: 0.9em;
+            padding: 15px;
+            border-bottom: 2px solid #404040;
+        }
+
+        .table td {
+            padding: 12px 15px;
+            color: #ffffff;
+            border-bottom: 1px solid #404040;
+        }
+
+        .table tbody tr:hover {
+            background: #353535;
+        }
+
+        .btn-sm {
+            padding: 5px 10px;
+            font-size: 0.85em;
+            border-radius: 5px;
+            margin: 0 3px;
+        }
+
+        .actions-cell {
+            white-space: nowrap;
+        }
     </style>
 </head>
 <body>
@@ -443,23 +547,23 @@
     <div class="container">
         <!-- Stats Grid -->
         <div class="stats-grid">
-            <div class="metric-card" data-category="flotte">
+            <div class="metric-card category-filter" data-category="flotte">
                 <div class="metric-value" id="flotteCount">0</div>
                 <div class="metric-label">Flotte</div>
             </div>
-            <div class="metric-card" data-category="chauffeur">
+            <div class="metric-card category-filter" data-category="chauffeur">
                 <div class="metric-value" id="chauffeurCount">0</div>
                 <div class="metric-label">Chauffeur</div>
             </div>
-            <div class="metric-card" data-category="transco">
+            <div class="metric-card category-filter" data-category="transco">
                 <div class="metric-value" id="transcoCount">0</div>
                 <div class="metric-label">Transco</div>
             </div>
-            <div class="metric-card" data-category="disponible">
+            <div class="metric-card category-filter" data-category="disponible">
                 <div class="metric-value" id="disponibleCount">0</div>
                 <div class="metric-label">Disponible</div>
             </div>
-            <div class="metric-card" data-category="immo">
+            <div class="metric-card category-filter" data-category="immo">
                 <div class="metric-value" id="immoCount">0</div>
                 <div class="metric-label">IMMO</div>
             </div>
@@ -519,203 +623,142 @@
 
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
         <script>
-            let currentData = {};
-            let currentCategory = 'all';
-
-            function updateTable(category = currentCategory) {
-                currentCategory = category;
-                
-                // Fetch vehicle data
-                fetch('/api/vehicles')
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.error) {
-                            console.error('Error:', data.error);
-                            return;
-                        }
-
-                        const tableBody = document.getElementById('vehicleTableBody');
-                        tableBody.innerHTML = ''; // Clear existing rows
-
-                        // Get the correct category data
-                        let vehicles = [];
-                        if (category === 'all') {
-                            // Add vehicles from each category
-                            Object.entries(data.categories).forEach(([cat, list]) => {
-                                vehicles = vehicles.concat(list.map(v => ({...v, category: cat})));
-                            });
-                        } else if (category === 'disponible') {
-                            // Combine both disponible_fs and disponible_mc
-                            if (data.categories.disponible_fs) {
-                                vehicles = vehicles.concat(data.categories.disponible_fs.map(v => ({...v, category: 'disponible_fs'})));
-                            }
-                            if (data.categories.disponible_mc) {
-                                vehicles = vehicles.concat(data.categories.disponible_mc.map(v => ({...v, category: 'disponible_mc'})));
-                            }
-                        } else if (category === 'immo') {
-                            // Get IMMO vehicles
-                            if (data.categories.immo) {
-                                vehicles = data.categories.immo.map(v => ({...v, category: 'immo'}));
-                            }
-                        } else {
-                            // Get vehicles for specific category
-                            vehicles = (data.categories[category] || []).map(v => ({...v, category: category}));
-                        }
-
-                        // Sort vehicles by type
-                        vehicles.sort((a, b) => (a.type || '').localeCompare(b.type || ''));
-
-                        if (vehicles.length === 0) {
-                            const emptyRow = document.createElement('tr');
-                            emptyRow.innerHTML = `
-                                <td colspan="6" class="text-center">Aucun véhicule trouvé</td>
-                            `;
-                            tableBody.appendChild(emptyRow);
-                            return;
-                        }
-
-                        // Create table rows
-                        vehicles.forEach(vehicle => {
-                            const row = document.createElement('tr');
-                            row.className = `category-row ${vehicle.category}`;
-                            
-                            // Get appropriate status badge class
-                            let statusBadgeClass = '';
-                            let statusText = '';
-                            
-                            if (vehicle.category === 'disponible_fs') {
-                                statusBadgeClass = 'available';
-                                statusText = 'Disponible FS';
-                            } else if (vehicle.category === 'disponible_mc') {
-                                statusBadgeClass = 'available';
-                                statusText = 'Disponible MC';
-                            } else if (vehicle.category === 'immo') {
-                                statusBadgeClass = 'maintenance';
-                                statusText = 'IMMO';
-                            } else {
-                                statusBadgeClass = getStatusBadgeClass(vehicle.status);
-                                statusText = vehicle.status || '';
-                            }
-
-                            row.innerHTML = `
-                                <td>${vehicle.type || ''}</td>
-                                <td>${vehicle.immatriculation || ''}</td>
-                                <td>${vehicle.cucar || ''}</td>
-                                <td>${vehicle.service || ''}</td>
-                                <td>
-                                    <span class="status-badge ${statusBadgeClass}">
-                                        ${statusText}
-                                    </span>
-                                </td>
-                                <td>
-                                    <div class="action-buttons">
-                                        <button class="btn btn-sm btn-outline-primary">
-                                            <i class="bx bx-edit-alt"></i>
-                                        </button>
-                                        <button class="btn btn-sm btn-outline-danger">
-                                            <i class="bx bx-trash"></i>
-                                        </button>
-                                    </div>
-                                </td>
-                            `;
-                            
-                            tableBody.appendChild(row);
-                        });
-
-                        // Update category counts in the left panel
-                        updateCategoryCounts(data.categories);
-                    })
-                    .catch(error => {
-                        console.error('Error:', error);
-                        const tableBody = document.getElementById('vehicleTableBody');
-                        tableBody.innerHTML = `
-                            <tr>
-                                <td colspan="6" class="text-center">Erreur lors du chargement des données</td>
-                            </tr>
-                        `;
-                    });
-            }
-
-            function getStatusBadgeClass(status) {
-                status = status.toLowerCase();
-                if (status.includes('disponible')) return 'available';
-                if (status.includes('immo')) return 'maintenance';
-                if (status.includes('france service')) return 'france-service';
-                if (status.includes('mc auto')) return 'mc-auto';
-                return 'busy';
-            }
-
-            async function updateDashboard() {
-                try {
-                    fetch('/api/dashboard')
-                        .then(response => response.json())
-                        .then(data => {
-                            document.getElementById('flotteCount').textContent = data.flotte || 0;
-                            document.getElementById('chauffeurCount').textContent = data.chauffeur || 0;
-                            document.getElementById('transcoCount').textContent = data.transco || 0;
-                            document.getElementById('disponibleCount').textContent = data.disponible || 0;
-                            document.getElementById('immoCount').textContent = data.immo || 0;
-                        })
-                        .catch(error => console.error('Error:', error));
-
-                    // Add IMMO data fetch
-                    fetch('/api/immo')
-                        .then(response => response.json())
-                        .then(data => {
-                            document.getElementById('immoCount').textContent = data.count || 0;
-                        })
-                        .catch(error => console.error('Error:', error));
-                } catch (error) {
-                    console.error('Error updating dashboard:', error);
-                }
-            }
-
-            function updateCategoryCounts(categories) {
-                const categoryRows = {
-                    'flotte': document.querySelector('.category-row.flotte td:last-child'),
-                    'chauffeur': document.querySelector('.category-row.chauffeur td:last-child'),
-                    'transco': document.querySelector('.category-row.transco td:last-child'),
-                    'disponible_fs': document.querySelector('.category-row.dispo-fs td:last-child'),
-                    'disponible_mc': document.querySelector('.category-row.dispo-mc td:last-child'),
-                    'immo': document.querySelector('.category-row.immo-fs td:last-child'),
-                    'gestionnaire': document.querySelector('.category-row.gestionnaire td:last-child'),
-                    'gratuit': document.querySelector('.category-row.gratuit td:last-child')
-                };
-
-                // Update counts for each category
-                Object.entries(categories).forEach(([category, vehicles]) => {
-                    if (categoryRows[category]) {
-                        categoryRows[category].textContent = vehicles.length;
-                    }
-                });
-            }
-
-            // Event Listeners
-            document.querySelectorAll('.metric-card').forEach(card => {
-                card.addEventListener('click', function() {
-                    const category = this.dataset.category;
-                    updateTable(category);
-                });
-            });
-
-            document.querySelector('.search-input').addEventListener('input', function(e) {
-                const searchTerm = e.target.value.toLowerCase();
-                const rows = document.querySelectorAll('.data-table tbody tr');
-                
-                rows.forEach(row => {
-                    const text = row.textContent.toLowerCase();
-                    row.style.display = text.includes(searchTerm) ? '' : 'none';
-                });
-            });
-
-            // Load initial data
             document.addEventListener('DOMContentLoaded', function() {
-                updateDashboard();
-                updateTable('all');
-            });
+                let currentCategory = 'all';
 
-            // Refresh every 5 minutes
-            setInterval(updateDashboard, 300000);
+                function updateTable() {
+                    fetch('/api/vehicles')
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.error) {
+                                console.error('Error:', data.error);
+                                return;
+                            }
+
+                            const tableBody = document.getElementById('vehicleTableBody');
+                            tableBody.innerHTML = '';
+
+                            // Get vehicles based on current category
+                            let vehicles = [];
+                            if (currentCategory === 'all') {
+                                Object.values(data.categories).forEach(categoryVehicles => {
+                                    vehicles = vehicles.concat(categoryVehicles);
+                                });
+                            } else if (currentCategory === 'disponible') {
+                                // Combine both disponible_fs and disponible_mc
+                                vehicles = [
+                                    ...(data.categories.disponible_fs || []),
+                                    ...(data.categories.disponible_mc || [])
+                                ];
+                            } else if (currentCategory === 'immo') {
+                                vehicles = data.categories.immo || [];
+                            } else {
+                                vehicles = data.categories[currentCategory] || [];
+                            }
+
+                            // Si aucun véhicule n'est trouvé
+                            if (vehicles.length === 0) {
+                                const emptyRow = document.createElement('tr');
+                                emptyRow.innerHTML = '<td colspan="6" class="text-center">Aucun véhicule trouvé</td>';
+                                tableBody.appendChild(emptyRow);
+                                return;
+                            }
+
+                            // Afficher les véhicules
+                            vehicles.forEach(vehicle => {
+                                const row = document.createElement('tr');
+                                
+                                const typeCell = document.createElement('td');
+                                typeCell.textContent = vehicle.type;
+                                
+                                const immatCell = document.createElement('td');
+                                immatCell.textContent = vehicle.immatriculation;
+                                
+                                const cucarCell = document.createElement('td');
+                                cucarCell.textContent = vehicle.cucar || '';
+                                
+                                const serviceCell = document.createElement('td');
+                                serviceCell.textContent = vehicle.service || '';
+                                
+                                const statusCell = document.createElement('td');
+                                const statusBadge = document.createElement('span');
+                                statusBadge.textContent = vehicle.status;
+                                
+                                // Appliquer le style approprié selon le statut
+                                if (vehicle.status === 'Disponible FS') {
+                                    statusBadge.className = 'badge badge-disponible-fs';
+                                } else if (vehicle.status === 'Disponible MC') {
+                                    statusBadge.className = 'badge badge-disponible-mc';
+                                } else if (vehicle.status === 'IMMO') {
+                                    statusBadge.className = 'badge badge-immo';
+                                } else {
+                                    statusBadge.className = 'badge badge-secondary';
+                                }
+                                statusCell.appendChild(statusBadge);
+                                
+                                const actionsCell = document.createElement('td');
+                                actionsCell.className = 'actions-cell';
+                                
+                                const editBtn = document.createElement('button');
+                                editBtn.className = 'btn btn-sm btn-primary mr-2';
+                                editBtn.innerHTML = '<i class="fas fa-edit"></i>';
+                                
+                                const deleteBtn = document.createElement('button');
+                                deleteBtn.className = 'btn btn-sm btn-danger';
+                                deleteBtn.innerHTML = '<i class="fas fa-trash"></i>';
+                                
+                                actionsCell.appendChild(editBtn);
+                                actionsCell.appendChild(deleteBtn);
+                                
+                                row.appendChild(typeCell);
+                                row.appendChild(immatCell);
+                                row.appendChild(cucarCell);
+                                row.appendChild(serviceCell);
+                                row.appendChild(statusCell);
+                                row.appendChild(actionsCell);
+                                
+                                tableBody.appendChild(row);
+                            });
+
+                            // Mettre à jour les compteurs
+                            updateCounts(data.categories);
+                        })
+                        .catch(error => {
+                            console.error('Error:', error);
+                            const tableBody = document.getElementById('vehicleTableBody');
+                            tableBody.innerHTML = '<tr><td colspan="6" class="text-center">Erreur lors du chargement des données</td></tr>';
+                        });
+                }
+
+                function updateCounts(categories) {
+                    // Mettre à jour les compteurs dans le dashboard
+                    document.getElementById('flotteCount').textContent = (categories.flotte || []).length;
+                    document.getElementById('chauffeurCount').textContent = (categories.chauffeur || []).length;
+                    document.getElementById('transcoCount').textContent = (categories.transco || []).length;
+                    document.getElementById('disponibleCount').textContent = 
+                        (categories.disponible_fs || []).length + (categories.disponible_mc || []).length;
+                    document.getElementById('immoCount').textContent = (categories.immo || []).length;
+                }
+
+                // Gérer les clics sur les catégories
+                document.querySelectorAll('.category-filter').forEach(button => {
+                    button.addEventListener('click', function() {
+                        const category = this.dataset.category;
+                        currentCategory = category;
+                        
+                        // Mettre à jour la classe active
+                        document.querySelectorAll('.category-filter').forEach(btn => {
+                            btn.classList.remove('active');
+                        });
+                        this.classList.add('active');
+                        
+                        updateTable();
+                    });
+                });
+
+                // Charger les données initiales
+                updateTable();
+            });
         </script>
     </div>
 </body>
