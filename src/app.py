@@ -367,7 +367,7 @@ def get_vehicles():
                             stats['by_type'][vehicle_type] = stats['by_type'].get(vehicle_type, 0) + 1
                             stats['by_category']['disponible_mc'] = stats['by_category'].get('disponible_mc', 0) + 1
 
-                    # IMMO vehicles (column T2)
+                    # IMMO vehicles (column T)
                     if len(row) >= 20 and row[19] and str(row[19]).strip() != '0':
                         vehicle_type, immat = parse_vehicle_with_immat(str(row[19]))
                         if vehicle_type and immat:
@@ -375,6 +375,7 @@ def get_vehicles():
                                 'type': vehicle_type,
                                 'immatriculation': immat,
                                 'cucar': '',
+                                'service': '',
                                 'status': 'IMMO',
                                 'category': 'immo'
                             }
