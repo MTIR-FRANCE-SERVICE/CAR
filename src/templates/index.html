@@ -524,161 +524,112 @@
 
             function updateTable(category = currentCategory) {
                 currentCategory = category;
-                const tableBody = document.getElementById('vehicleTableBody');
-                let tableContent = '';
+                
+                // Fetch vehicle data
+                fetch('/api/vehicles')
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.error) {
+                            console.error('Error:', data.error);
+                            return;
+                        }
 
-                if (category === 'disponible') {
-                    // Get both FS and MC available vehicles
-                    const fsVehicles = currentData.categories.disponible_fs || [];
-                    const mcVehicles = currentData.categories.disponible_mc || [];
+                        const tableBody = document.getElementById('vehicleTableBody');
+                        tableBody.innerHTML = ''; // Clear existing rows
 
-                    // Add FS section header
-                    if (fsVehicles.length > 0) {
-                        tableContent += `
-                            <tr class="category-header">
-                                <td colspan="6">VÉHICULE DISPONIBLE FS</td>
-                            </tr>
-                        `;
-
-                        // Add FS vehicles
-                        fsVehicles.forEach(vehicle => {
-                            tableContent += `
-                                <tr>
-                                    <td>${vehicle.type || '-'}</td>
-                                    <td>${vehicle.immatriculation || '-'}</td>
-                                    <td>${vehicle.cucar || '-'}</td>
-                                    <td>FS</td>
-                                    <td>
-                                        <span class="status-badge available">Disponible</span>
-                                    </td>
-                                    <td>
-                                        <button class="btn btn-sm btn-outline-primary">
-                                            <i class="bx bx-info-circle"></i>
-                                        </button>
-                                    </td>
-                                </tr>
-                            `;
-                        });
-                    }
-
-                    // Add MC section header
-                    if (mcVehicles.length > 0) {
-                        tableContent += `
-                            <tr class="category-header">
-                                <td colspan="6">VÉHICULE DISPONIBLE MC</td>
-                            </tr>
-                        `;
-
-                        // Add MC vehicles
-                        mcVehicles.forEach(vehicle => {
-                            tableContent += `
-                                <tr>
-                                    <td>${vehicle.type || '-'}</td>
-                                    <td>${vehicle.immatriculation || '-'}</td>
-                                    <td>${vehicle.cucar || '-'}</td>
-                                    <td>MC</td>
-                                    <td>
-                                        <span class="status-badge available">Disponible</span>
-                                    </td>
-                                    <td>
-                                        <button class="btn btn-sm btn-outline-primary">
-                                            <i class="bx bx-info-circle"></i>
-                                        </button>
-                                    </td>
-                                </tr>
-                            `;
-                        });
-                    }
-
-                    if (fsVehicles.length === 0 && mcVehicles.length === 0) {
-                        tableContent = `
-                            <tr>
-                                <td colspan="6" class="text-center">Aucun véhicule disponible</td>
-                            </tr>
-                        `;
-                    }
-
-                    tableBody.innerHTML = tableContent;
-                } else if (category === 'immo') {
-                    // Get IMMO vehicles
-                    const immoVehicles = currentData.categories.immo || [];
-
-                    if (immoVehicles.length > 0) {
-                        // Add IMMO section header
-                        tableContent += `
-                            <tr class="category-header immo-header">
-                                <td colspan="6">VÉHICULE (IMMO)</td>
-                            </tr>
-                        `;
-
-                        // Add IMMO vehicles
-                        immoVehicles.forEach(vehicle => {
-                            tableContent += `
-                                <tr>
-                                    <td>${vehicle.type || '-'}</td>
-                                    <td>${vehicle.immatriculation || '-'}</td>
-                                    <td>${vehicle.cucar || '-'}</td>
-                                    <td>-</td>
-                                    <td>
-                                        <span class="status-badge maintenance">IMMO</span>
-                                    </td>
-                                    <td>
-                                        <button class="btn btn-sm btn-outline-primary">
-                                            <i class="bx bx-info-circle"></i>
-                                        </button>
-                                    </td>
-                                </tr>
-                            `;
-                        });
-                    } else {
-                        tableContent = `
-                            <tr>
-                                <td colspan="6" class="text-center">Aucun véhicule en IMMO</td>
-                            </tr>
-                        `;
-                    }
-
-                    tableBody.innerHTML = tableContent;
-                } else {
-                    // Handle other categories
-                    let vehicles = [];
-                    if (category === 'all') {
-                        Object.values(currentData.categories).forEach(categoryVehicles => {
-                            if (Array.isArray(categoryVehicles)) {
-                                vehicles = vehicles.concat(categoryVehicles);
+                        // Get the correct category data
+                        let vehicles = [];
+                        if (category === 'all') {
+                            // Add vehicles from each category
+                            if (data.categories.flotte) {
+                                vehicles = vehicles.concat(data.categories.flotte.map(v => ({...v, category: 'flotte'})));
                             }
-                        });
-                    } else {
-                        vehicles = currentData.categories[category] || [];
-                    }
+                            if (data.categories.chauffeur) {
+                                vehicles = vehicles.concat(data.categories.chauffeur.map(v => ({...v, category: 'chauffeur'})));
+                            }
+                            if (data.categories.transco) {
+                                vehicles = vehicles.concat(data.categories.transco.map(v => ({...v, category: 'transco'})));
+                            }
+                            if (data.categories.disponible_fs) {
+                                vehicles = vehicles.concat(data.categories.disponible_fs.map(v => ({...v, category: 'disponible_fs'})));
+                            }
+                            if (data.categories.disponible_mc) {
+                                vehicles = vehicles.concat(data.categories.disponible_mc.map(v => ({...v, category: 'disponible_mc'})));
+                            }
+                            if (data.categories.immo) {
+                                vehicles = vehicles.concat(data.categories.immo.map(v => ({...v, category: 'immo'})));
+                            }
+                        } else {
+                            // Get vehicles for specific category
+                            vehicles = (data.categories[category] || []).map(v => ({...v, category: category}));
+                        }
 
-                    if (vehicles.length > 0) {
-                        tableBody.innerHTML = vehicles.map(vehicle => `
-                            <tr>
-                                <td>${vehicle.type || '-'}</td>
-                                <td>${vehicle.immatriculation || '-'}</td>
-                                <td>${vehicle.cucar || '-'}</td>
-                                <td>${vehicle.service || '-'}</td>
+                        // Sort vehicles by type
+                        vehicles.sort((a, b) => (a.type || '').localeCompare(b.type || ''));
+
+                        if (vehicles.length === 0) {
+                            const emptyRow = document.createElement('tr');
+                            emptyRow.innerHTML = `
+                                <td colspan="6" class="text-center">Aucun véhicule trouvé</td>
+                            `;
+                            tableBody.appendChild(emptyRow);
+                            return;
+                        }
+
+                        // Create table rows
+                        vehicles.forEach(vehicle => {
+                            const row = document.createElement('tr');
+                            row.className = `category-row ${vehicle.category}`;
+                            
+                            // Get appropriate status badge class
+                            let statusBadgeClass = '';
+                            if (vehicle.category === 'disponible_fs' || vehicle.category === 'disponible_mc') {
+                                statusBadgeClass = 'available';
+                            } else if (vehicle.category === 'immo') {
+                                statusBadgeClass = 'maintenance';
+                            } else {
+                                statusBadgeClass = getStatusBadgeClass(vehicle.status);
+                            }
+
+                            row.innerHTML = `
+                                <td>${vehicle.type || ''}</td>
+                                <td>${vehicle.immatriculation || ''}</td>
+                                <td>${vehicle.cucar || ''}</td>
+                                <td>${vehicle.service || ''}</td>
                                 <td>
-                                    <span class="status-badge ${getStatusBadgeClass(vehicle.status || '')}">
-                                        ${vehicle.status || '-'}
+                                    <span class="status-badge ${statusBadgeClass}">
+                                        ${vehicle.status || (vehicle.category === 'disponible_fs' ? 'Disponible FS' : 
+                                          vehicle.category === 'disponible_mc' ? 'Disponible MC' : 
+                                          vehicle.category === 'immo' ? 'IMMO' : '')}
                                     </span>
                                 </td>
                                 <td>
-                                    <button class="btn btn-sm btn-outline-primary">
-                                        <i class="bx bx-info-circle"></i>
-                                    </button>
+                                    <div class="action-buttons">
+                                        <button class="btn btn-sm btn-outline-primary">
+                                            <i class="bx bx-edit-alt"></i>
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-danger">
+                                            <i class="bx bx-trash"></i>
+                                        </button>
+                                    </div>
                                 </td>
-                            </tr>
-                        `).join('');
-                    } else {
+                            `;
+                            
+                            tableBody.appendChild(row);
+                        });
+
+                        // Update category counts in the left panel
+                        updateCategoryCounts(data.categories);
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        const tableBody = document.getElementById('vehicleTableBody');
                         tableBody.innerHTML = `
                             <tr>
-                                <td colspan="6" class="text-center">Aucun véhicule trouvé</td>
+                                <td colspan="6" class="text-center">Erreur lors du chargement des données</td>
                             </tr>
                         `;
-                    }
-                }
+                    });
             }
 
             function getStatusBadgeClass(status) {
@@ -715,6 +666,26 @@
                 }
             }
 
+            function updateCategoryCounts(categories) {
+                const categoryRows = {
+                    'flotte': document.querySelector('.category-row.flotte td:last-child'),
+                    'chauffeur': document.querySelector('.category-row.chauffeur td:last-child'),
+                    'transco': document.querySelector('.category-row.transco td:last-child'),
+                    'disponible_fs': document.querySelector('.category-row.dispo-fs td:last-child'),
+                    'disponible_mc': document.querySelector('.category-row.dispo-mc td:last-child'),
+                    'immo': document.querySelector('.category-row.immo-fs td:last-child'),
+                    'gestionnaire': document.querySelector('.category-row.gestionnaire td:last-child'),
+                    'gratuit': document.querySelector('.category-row.gratuit td:last-child')
+                };
+
+                // Update counts for each category
+                Object.entries(categories).forEach(([category, vehicles]) => {
+                    if (categoryRows[category]) {
+                        categoryRows[category].textContent = vehicles.length;
+                    }
+                });
+            }
+
             // Event Listeners
             document.querySelectorAll('.metric-card').forEach(card => {
                 card.addEventListener('click', function() {
@@ -733,9 +704,12 @@
                 });
             });
 
-            // Initial load
-            updateDashboard();
-            
+            // Load initial data
+            document.addEventListener('DOMContentLoaded', function() {
+                updateDashboard();
+                updateTable('all');
+            });
+
             // Refresh every 5 minutes
             setInterval(updateDashboard, 300000);
         </script>
