@@ -558,6 +558,44 @@ def favicon():
     return send_from_directory(os.path.join(app.root_path, 'static'),
                              'favicon.ico', mimetype='image/vnd.microsoft.icon')
 
+def get_immo_data():
+    try:
+        service = get_google_sheets_service()
+        if not service:
+            return jsonify({'error': 'Failed to connect to Google Sheets'}), 500
+
+        range_name = 'VÉHICULE!T2:U55'
+        result = service.spreadsheets().values().get(
+            spreadsheetId=SPREADSHEET_ID,
+            range=range_name
+        ).execute()
+        
+        values = result.get('values', [])
+        if not values:
+            return jsonify({'count': 0, 'data': []})
+
+        immo_data = []
+        for row in values:
+            if len(row) >= 2:  # Ensure we have both columns
+                immo_data.append({
+                    'vehicle': row[0] if len(row) > 0 else '',
+                    'status': row[1] if len(row) > 1 else ''
+                })
+
+        return jsonify({
+            'count': len(immo_data),
+            'data': immo_data
+        })
+
+    except Exception as e:
+        logger.error(f"Error in get_immo_data: {str(e)}")
+        logger.error(traceback.format_exc())
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/immo')
+def immo():
+    return get_immo_data()
+
 if __name__ == '__main__':
     # Test connection on startup
     service = get_google_sheets_service()

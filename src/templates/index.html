@@ -692,23 +692,24 @@
 
             async function updateDashboard() {
                 try {
-                    const response = await fetch('/api/vehicles');
-                    const data = await response.json();
-                    
-                    if (data.success) {
-                        currentData = data;
-                        
-                        // Update counts
-                        document.getElementById('flotteCount').textContent = data.stats.by_category.flotte || 0;
-                        document.getElementById('chauffeurCount').textContent = data.stats.by_category.chauffeur || 0;
-                        document.getElementById('transcoCount').textContent = data.stats.by_category.transco || 0;
-                        document.getElementById('disponibleCount').textContent = 
-                            (data.stats.by_category.disponible_fs || 0) + (data.stats.by_category.disponible_mc || 0);
-                        document.getElementById('immoCount').textContent = data.stats.by_category.immo || 0;
+                    fetch('/api/dashboard')
+                        .then(response => response.json())
+                        .then(data => {
+                            document.getElementById('flotteCount').textContent = data.flotte || 0;
+                            document.getElementById('chauffeurCount').textContent = data.chauffeur || 0;
+                            document.getElementById('transcoCount').textContent = data.transco || 0;
+                            document.getElementById('disponibleCount').textContent = data.disponible || 0;
+                            document.getElementById('immoCount').textContent = data.immo || 0;
+                        })
+                        .catch(error => console.error('Error:', error));
 
-                        // Update table
-                        updateTable();
-                    }
+                    // Add IMMO data fetch
+                    fetch('/api/immo')
+                        .then(response => response.json())
+                        .then(data => {
+                            document.getElementById('immoCount').textContent = data.count || 0;
+                        })
+                        .catch(error => console.error('Error:', error));
                 } catch (error) {
                     console.error('Error updating dashboard:', error);
                 }
