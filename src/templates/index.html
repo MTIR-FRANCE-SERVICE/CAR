@@ -541,23 +541,21 @@
                         let vehicles = [];
                         if (category === 'all') {
                             // Add vehicles from each category
-                            if (data.categories.flotte) {
-                                vehicles = vehicles.concat(data.categories.flotte.map(v => ({...v, category: 'flotte'})));
-                            }
-                            if (data.categories.chauffeur) {
-                                vehicles = vehicles.concat(data.categories.chauffeur.map(v => ({...v, category: 'chauffeur'})));
-                            }
-                            if (data.categories.transco) {
-                                vehicles = vehicles.concat(data.categories.transco.map(v => ({...v, category: 'transco'})));
-                            }
+                            Object.entries(data.categories).forEach(([cat, list]) => {
+                                vehicles = vehicles.concat(list.map(v => ({...v, category: cat})));
+                            });
+                        } else if (category === 'disponible') {
+                            // Combine both disponible_fs and disponible_mc
                             if (data.categories.disponible_fs) {
                                 vehicles = vehicles.concat(data.categories.disponible_fs.map(v => ({...v, category: 'disponible_fs'})));
                             }
                             if (data.categories.disponible_mc) {
                                 vehicles = vehicles.concat(data.categories.disponible_mc.map(v => ({...v, category: 'disponible_mc'})));
                             }
+                        } else if (category === 'immo') {
+                            // Get IMMO vehicles
                             if (data.categories.immo) {
-                                vehicles = vehicles.concat(data.categories.immo.map(v => ({...v, category: 'immo'})));
+                                vehicles = data.categories.immo.map(v => ({...v, category: 'immo'}));
                             }
                         } else {
                             // Get vehicles for specific category
@@ -583,12 +581,20 @@
                             
                             // Get appropriate status badge class
                             let statusBadgeClass = '';
-                            if (vehicle.category === 'disponible_fs' || vehicle.category === 'disponible_mc') {
+                            let statusText = '';
+                            
+                            if (vehicle.category === 'disponible_fs') {
                                 statusBadgeClass = 'available';
+                                statusText = 'Disponible FS';
+                            } else if (vehicle.category === 'disponible_mc') {
+                                statusBadgeClass = 'available';
+                                statusText = 'Disponible MC';
                             } else if (vehicle.category === 'immo') {
                                 statusBadgeClass = 'maintenance';
+                                statusText = 'IMMO';
                             } else {
                                 statusBadgeClass = getStatusBadgeClass(vehicle.status);
+                                statusText = vehicle.status || '';
                             }
 
                             row.innerHTML = `
@@ -598,9 +604,7 @@
                                 <td>${vehicle.service || ''}</td>
                                 <td>
                                     <span class="status-badge ${statusBadgeClass}">
-                                        ${vehicle.status || (vehicle.category === 'disponible_fs' ? 'Disponible FS' : 
-                                          vehicle.category === 'disponible_mc' ? 'Disponible MC' : 
-                                          vehicle.category === 'immo' ? 'IMMO' : '')}
+                                        ${statusText}
                                     </span>
                                 </td>
                                 <td>
