@@ -515,7 +515,7 @@ def get_point_fs_data():
         logger.error(traceback.format_exc())
         return jsonify({})
 @app.route('/point_mc')
-def point_fs():
+def point_mc():
     return render_template('point_mc.html')
 
 @app.route('/get_point_mc_data')
