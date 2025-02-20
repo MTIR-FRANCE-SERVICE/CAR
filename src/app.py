@@ -450,7 +450,7 @@ def get_point_fs_data():
         logger.debug("Available sheets: {}".format(sheet_titles))
 
         # Récupérer les données de la feuille POINT FS
-        range_name = "'POINT FS'!B2:D45"  
+        range_name = "'POINT FS'!B2:D71"  
         logger.debug("Fetching range: {}".format(range_name))
         
         result = service.spreadsheets().values().get(
@@ -481,6 +481,58 @@ def get_point_fs_data():
 
     except Exception as e:
         logger.error("Error fetching Point FS data: {}".format(str(e)))
+        logger.error(traceback.format_exc())
+        return jsonify({})
+
+@app.route('/point_mc')
+def point_mc():
+    return render_template('point_mc.html')
+
+@app.route('/get_point_mc_data')
+def get_point_mc_data():
+    try:
+        service = get_google_sheets_service()
+        if not service:
+            logger.error("Failed to get Google Sheets service")
+            return jsonify({})
+
+        # Get all sheets to verify POINT MC exists
+        sheets_metadata = service.spreadsheets().get(spreadsheetId=SPREADSHEET_ID).execute()
+        sheet_titles = [sheet['properties']['title'] for sheet in sheets_metadata.get('sheets', [])]
+        logger.debug("Available sheets: {}".format(sheet_titles))
+
+        # Récupérer les données de la feuille POINT MC
+        range_name = "'POINT MC'!B2:D61"  
+        logger.debug("Fetching range: {}".format(range_name))
+        
+        result = service.spreadsheets().values().get(
+            spreadsheetId=SPREADSHEET_ID,
+            range=range_name
+        ).execute()
+        
+        values = result.get('values', [])
+        
+        # Print detailed information about the data
+        logger.debug("\n=== DATA FROM GOOGLE SHEETS ===")
+        logger.debug("Total rows received: {}".format(len(values)))
+        
+        # Filter out empty rows and process the data
+        processed_values = []
+        for i, row in enumerate(values):
+            logger.debug("Row {}: {}".format(i+2, row))  
+            if row and any(cell.strip() for cell in row if isinstance(cell, str)):  
+                processed_values.append(row)
+        
+        logger.debug("\nProcessed rows: {}".format(len(processed_values)))
+        logger.debug("Processed values:")
+        for row in processed_values:
+            logger.debug(row)
+        logger.debug("============================\n")
+
+        return jsonify({'data': processed_values})
+
+    except Exception as e:
+        logger.error("Error fetching Point MC data: {}".format(str(e)))
         logger.error(traceback.format_exc())
         return jsonify({})
 

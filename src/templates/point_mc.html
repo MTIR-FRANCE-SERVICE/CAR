@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Point SAISIE (MC)</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/boxicons@latest/css/boxicons.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #1a1a1a;
+            --secondary: #333333;
+            --accent: #007bff;
+            --text: #ffffff;
+            --background: #121212;
+            --card-bg: #1e1e1e;
+            --border: #2d2d2d;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--background);
+            color: var(--text);
+            line-height: 1.5;
+            margin: 0;
+            padding: 0;
+        }
+
+        .navbar {
+            background: var(--primary);
+            padding: 1rem 2rem;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .navbar-brand {
+            color: var(--text) !important;
+            font-size: 1.5rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .point-mc-card {
+            background: var(--card-bg);
+            border-radius: 15px;
+            border: 1px solid var(--border);
+            overflow: hidden;
+            margin-top: 2rem;
+        }
+
+        .point-mc-header {
+            background: var(--primary);
+            color: var(--text);
+            padding: 1rem;
+            font-weight: 600;
+            text-align: center;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .point-mc-content {
+            padding: 1.5rem;
+        }
+
+        .info-row {
+            padding: 0.5rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .info-row:last-child {
+            border-bottom: none;
+        }
+
+        .info-row:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .vehicle-list, .departure-list, .caution-list {
+            padding-left: 1rem;
+            list-style-type: none;
+        }
+
+        .vehicle-item, .departure-item, .caution-item {
+            padding: 0.25rem 0;
+        }
+
+        .financial-section {
+            background: rgba(0, 123, 255, 0.1);
+            padding: 0.5rem;
+            border-radius: 5px;
+            margin: 0.5rem 0;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+            }
+            
+            .point-mc-card {
+                margin-top: 1rem;
+            }
+
+            .point-mc-content {
+                padding: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-dark mb-4">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="/">
+                <i class='bx bxs-car-garage'></i>
+                <span>Point SAISIE (MC)</span>
+            </a>
+            <a href="/" class="btn btn-outline-light">
+                <i class='bx bx-arrow-back'></i>
+                Retour
+            </a>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="point-mc-card">
+            <div class="point-mc-header">
+                POINT SAISIE (MC)
+            </div>
+            <div class="point-mc-content" id="pointMcData">
+                <!-- Data will be populated dynamically -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            fetchPointMcData();
+        });
+
+        function fetchPointMcData() {
+            fetch('/get_point_mc_data')
+                .then(response => response.json())
+                .then(response => {
+                    const container = document.getElementById('pointMcData');
+                    const data = response.data;
+                    
+                    // Create table to display the data
+                    let html = '<table class="table table-dark table-hover">';
+                    
+                    // Add each row from the data
+                    data.forEach(row => {
+                        html += '<tr>';
+                        // Add each cell in the row
+                        row.forEach(cell => {
+                            html += `<td>${cell || ''}</td>`;
+                        });
+                        html += '</tr>';
+                    });
+                    
+                    html += '</table>';
+                    container.innerHTML = html;
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    document.getElementById('pointMcData').innerHTML = 'Error loading data';
+                });
+        }
+    </script>
+</body>
+</html>
