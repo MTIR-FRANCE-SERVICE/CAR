@@ -246,9 +246,74 @@ def set_cached_vehicles_data(data):
     last_fetch_time = datetime.now()
     cached_vehicles_data = data
 
+def get_categories_data(service, spreadsheet_id):
+    """Fetches category data from the VÉHICULE sheet."""
+    try:
+        ranges = [
+            "'VÉHICULE'!L2",  # FLOTTE
+            "'VÉHICULE'!L3",  # CHAUFFEUR
+            "'VÉHICULE'!L4",  # CHAUFFEUR
+            "'VÉHICULE'!K5",  # FS
+            "'VÉHICULE'!K6",  # MC
+            "'VÉHICULE'!L7",  # GESTIONNAIRE
+            "'VÉHICULE'!L8",  # GRATUIT
+            "'VÉHICULE'!L9",  # TRANSCO
+            "'VÉHICULE'!L10", # MLC
+            "'VÉHICULE'!L11", # MC
+            "'VÉHICULE'!L12", # FC
+            "'VÉHICULE'!L13", # MD
+            "'VÉHICULE'!L14", # IMMO (FS)
+            "'VÉHICULE'!L15", # IMMO (MC)
+            "'VÉHICULE'!L16", # DISPO(FS)
+            "'VÉHICULE'!L17"  # DISPO(MC)
+        ]
+
+        result = service.spreadsheets().values().batchGet(
+            spreadsheetId=spreadsheet_id,
+            ranges=ranges,
+            valueRenderOption='FORMATTED_VALUE'
+        ).execute()
+
+        values = result.get('valueRanges', [])
+        if not values:
+            logger.warning("No category data found in sheet")
+            return {}
+
+        categories = {
+            'flotte': values[0].get('values', [['0']])[0][0],
+            'chauffeur1': values[1].get('values', [['0']])[0][0],
+            'chauffeur2': values[2].get('values', [['0']])[0][0],
+            'fs': values[3].get('values', [['0']])[0][0],
+            'mc1': values[4].get('values', [['0']])[0][0],
+            'gestionnaire': values[5].get('values', [['0']])[0][0],
+            'gratuit': values[6].get('values', [['0']])[0][0],
+            'transco': values[7].get('values', [['0']])[0][0],
+            'mlc': values[8].get('values', [['0']])[0][0],
+            'mc2': values[9].get('values', [['0']])[0][0],
+            'fc': values[10].get('values', [['0']])[0][0],
+            'md': values[11].get('values', [['0']])[0][0],
+            'immo_fs': values[12].get('values', [['0']])[0][0],
+            'immo_mc': values[13].get('values', [['0']])[0][0],
+            'dispo_fs': values[14].get('values', [['0']])[0][0],
+            'dispo_mc': values[15].get('values', [['0']])[0][0],
+        }
+
+        return categories
+
+    except Exception as e:
+        logger.error(f"Error getting category data: {str(e)}")
+        logger.error(traceback.format_exc())
+        return {}
+
 @app.route('/')
 def index():
-    return render_template('index.html')
+    service = get_google_sheets_service()
+    if not service:
+        logger.error("Failed to get Google Sheets service")
+        return render_template('index.html', categories={})
+
+    categories = get_categories_data(service, SPREADSHEET_ID)
+    return render_template('index.html', categories=categories)
 
 @app.route('/api/dashboard-data')
 def get_dashboard_data():

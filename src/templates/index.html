@@ -579,22 +579,26 @@
             <div class="vehicle-categories-container">
                 <table class="vehicle-categories-table">
                     <tbody>
-                        <tr class="category-row flotte"><td>FLOTTE</td><td>130</td></tr>
-                        <tr class="category-row chauffeur"><td>CHAUFFEUR</td><td>110</td></tr>
-                        <tr class="category-row chauffeur"><td>CHAUFFEUR</td><td>108</td></tr>
-                        <tr class="category-row fs"><td>FS</td><td>96</td></tr>
-                        <tr class="category-row mc"><td>MC</td><td>12</td></tr>
-                        <tr class="category-row gestionnaire"><td>GESTIONNAIRE</td><td>1</td></tr>
-                        <tr class="category-row gratuit"><td>GRATUIT</td><td>1</td></tr>
-                        <tr class="category-row transco"><td>TRANSCO</td><td>26</td></tr>
-                        <tr class="category-row mlc"><td>MLC</td><td>0</td></tr>
-                        <tr class="category-row mc"><td>MC</td><td>13</td></tr>
-                        <tr class="category-row fc"><td>FC</td><td>13</td></tr>
-                        <tr class="category-row md"><td>MD</td><td>0</td></tr>
-                        <tr class="category-row immo-fs"><td>IMMO (FS)</td><td>0</td></tr>
-                        <tr class="category-row immo-mc"><td>IMMO (MC)</td><td>0</td></tr>
-                        <tr class="category-row dispo-fs"><td>DISPO(FS)</td><td>6</td></tr>
-                        <tr class="category-row dispo-mc"><td>DISPO(MC)</td><td>1</td></tr>
+                        {% if categories %}
+                            <tr class="category-row flotte"><td>FLOTTE</td><td>{{ categories.flotte }}</td></tr>
+                            <tr class="category-row chauffeur"><td>CHAUFFEUR</td><td>{{ categories.chauffeur1 }}</td></tr>
+                            <tr class="category-row chauffeur"><td>CHAUFFEUR</td><td>{{ categories.chauffeur2 }}</td></tr>
+                            <tr class="category-row fs"><td>FS</td><td>{{ categories.fs }}</td></tr>
+                            <tr class="category-row mc"><td>MC</td><td>{{ categories.mc1 }}</td></tr>
+                            <tr class="category-row gestionnaire"><td>GESTIONNAIRE</td><td>{{ categories.gestionnaire }}</td></tr>
+                            <tr class="category-row gratuit"><td>GRATUIT</td><td>{{ categories.gratuit }}</td></tr>
+                            <tr class="category-row transco"><td>TRANSCO</td><td>{{ categories.transco }}</td></tr>
+                            <tr class="category-row mlc"><td>MLC</td><td>{{ categories.mlc }}</td></tr>
+                            <tr class="category-row mc"><td>MC</td><td>{{ categories.mc2 }}</td></tr>
+                            <tr class="category-row fc"><td>FC</td><td>{{ categories.fc }}</td></tr>
+                            <tr class="category-row md"><td>MD</td><td>{{ categories.md }}</td></tr>
+                            <tr class="category-row immo-fs"><td>IMMO (FS)</td><td>{{ categories.immo_fs }}</td></tr>
+                            <tr class="category-row immo-mc"><td>IMMO (MC)</td><td>{{ categories.immo_mc }}</td></tr>
+                            <tr class="category-row dispo-fs"><td>DISPO(FS)</td><td>{{ categories.dispo_fs }}</td></tr>
+                            <tr class="category-row dispo-mc"><td>DISPO(MC)</td><td>{{ categories.dispo_mc }}</td></tr>
+                        {% else %}
+                            <tr><td colspan="2">No categories data available</td></tr>
+                        {% endif %}
                     </tbody>
                 </table>
             </div>
