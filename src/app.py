@@ -816,7 +816,7 @@ def parse_point_mc_data(values):
         logger.error(traceback.format_exc())
     return data
 
-@app.route('/point-mc')
+@app.route('/point_mc')
 def point_mc():
     return render_template('point_mc.html')
 
