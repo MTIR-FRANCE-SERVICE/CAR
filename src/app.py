@@ -259,30 +259,61 @@ def get_dashboard_data():
             logger.error("Failed to get Google Sheets service")
             return jsonify({'error': 'Failed to initialize Google Sheets service'}), 500
 
-        logger.info("Fetching data from sheet")
-        result = service.spreadsheets().values().get(
+        # Fetch data from Point FS
+        logger.info("Fetching data from Point FS sheet")
+        result_fs = service.spreadsheets().values().get(
             spreadsheetId=SPREADSHEET_ID,
-            range="'Point FS'!A1:B50",
+            range="'Point FS'!A1:D50",
             valueRenderOption='UNFORMATTED_VALUE'
         ).execute()
-        logger.info(f"Data fetched successfully: {result}")
+        logger.info(f"Data fetched successfully from Point FS: {result_fs}")
 
-        values = result.get('values', [])
-        if not values:
-            logger.warning("No data found in sheet")
-            return jsonify({'error': 'No data found'}), 404
+        values_fs = result_fs.get('values', [])
+        if not values_fs:
+            logger.warning("No data found in Point FS sheet")
+            return jsonify({'error': 'No data found in Point FS'}), 404
 
-        logger.info(f"Processing {len(values)} rows of data")
-        data = []
-        for row in values:
+        logger.info(f"Processing {len(values_fs)} rows of data from Point FS")
+        data_fs = []
+        for row in values_fs:
             if len(row) >= 2:
-                data.append({
+                data_fs.append({
                     'name': str(row[0]),
                     'value': row[1]
                 })
-        logger.info(f"Processed data: {data}")
-        
-        return jsonify(data)
+        logger.info(f"Processed data from Point FS: {data_fs}")
+
+        # Fetch data from Point MC
+        logger.info("Fetching data from Point MC sheet")
+        result_mc = service.spreadsheets().values().get(
+            spreadsheetId=SPREADSHEET_ID,
+            range="'POINT MC'!A1:D50",  # Adjust range as needed
+            valueRenderOption='UNFORMATTED_VALUE'
+        ).execute()
+        logger.info(f"Data fetched successfully from Point MC: {result_mc}")
+
+        values_mc = result_mc.get('values', [])
+        if not values_mc:
+            logger.warning("No data found in Point MC sheet")
+            return jsonify({'error': 'No data found in Point MC'}), 404
+
+        logger.info(f"Processing {len(values_mc)} rows of data from Point MC")
+        data_mc = []
+        for row in values_mc:
+            if len(row) >= 2:
+                data_mc.append({
+                    'name': str(row[0]),
+                    'value': row[1]
+                })
+        logger.info(f"Processed data from Point MC: {data_mc}")
+
+        # Combine data from both sheets
+        combined_data = {
+            'point_fs': data_fs,
+            'point_mc': data_mc
+        }
+
+        return jsonify(combined_data)
 
     except Exception as e:
         logger.error(f"Error in get_dashboard_data: {str(e)}")
@@ -450,7 +481,7 @@ def get_point_fs_data():
         logger.debug("Available sheets: {}".format(sheet_titles))
 
         # Récupérer les données de la feuille POINT FS
-        range_name = "'POINT FS'!B2:D45"  
+        range_name = "'POINT FS'!B2:D71"  
         logger.debug("Fetching range: {}".format(range_name))
         
         result = service.spreadsheets().values().get(
@@ -483,6 +514,57 @@ def get_point_fs_data():
         logger.error("Error fetching Point FS data: {}".format(str(e)))
         logger.error(traceback.format_exc())
         return jsonify({})
+@app.route('/point_mc')
+def point_fs():
+    return render_template('point_mc.html')
+
+@app.route('/get_point_mc_data')
+def get_point_mc_data():
+    try:
+        service = get_google_sheets_service()
+        if not service:
+            logger.error("Failed to get Google Sheets service")
+            return jsonify({})
+
+        # Get all sheets to verify POINT MC exists
+        sheets_metadata = service.spreadsheets().get(spreadsheetId=SPREADSHEET_ID).execute()
+        sheet_titles = [sheet['properties']['title'] for sheet in sheets_metadata.get('sheets', [])]
+        logger.debug("Available sheets: {}".format(sheet_titles))
+
+        # Récupérer les données de la feuille POINT MC
+        range_name = "'POINT MC'!B2:D61"  
+        logger.debug("Fetching range: {}".format(range_name))
+        
+        result = service.spreadsheets().values().get(
+            spreadsheetId=SPREADSHEET_ID,
+            range=range_name
+        ).execute()
+        
+        values = result.get('values', [])
+        
+        # Print detailed information about the data
+        logger.debug("\n=== DATA FROM GOOGLE SHEETS ===")
+        logger.debug("Total rows received: {}".format(len(values)))
+        
+        # Filter out empty rows and process the data
+        processed_values = []
+        for i, row in enumerate(values):
+            logger.debug("Row {}: {}".format(i+2, row))  
+            if row and any(cell.strip() for cell in row if isinstance(cell, str)):  
+                processed_values.append(row)
+        
+        logger.debug("\nProcessed rows: {}".format(len(processed_values)))
+        logger.debug("Processed values:")
+        for row in processed_values:
+            logger.debug(row)
+        logger.debug("============================\n")
+
+        return jsonify({'data': processed_values})
+
+    except Exception as e:
+        logger.error("Error fetching Point MC data: {}".format(str(e)))
+        logger.error(traceback.format_exc())
+        return jsonify({})       
 
 @app.route('/test')
 def test_sheets():
@@ -647,6 +729,144 @@ def get_dashboard():
         logger.error(f"Error in get_dashboard: {str(e)}")
         logger.error(traceback.format_exc())
         return jsonify({'error': str(e)}), 500
+
+def parse_point_mc_data(values):
+    data = {
+        'active_drivers': 0,
+        'total_vehicles': 0,
+        'available_vehicles': 0,
+        'categories': {
+            'FLOTTE': 0,
+            'CHAUFFEUR': 0,
+            'TRANSCO': 0,
+            'DISPONIBLE': 0
+        },
+        'status': {
+            'MC': 0,
+            'FC': 0,
+            'FRANCE_SERV': 0
+        },
+        'vehicle_types': [],
+        'weekly_departures': 0,
+        'daily_departures': 0,
+        'weekly_stops': 0,
+        'daily_stops': 0,
+        'ca_semaine': 0,
+        'ca_jour': 0
+    }
+    
+    try:
+        if not values:
+            logger.error("No values received from Point MC sheet")
+            return data
+
+        logger.debug("Processing {} rows from Point MC".format(len(values)))
+        for row in values:
+            if len(row) < 2:
+                continue
+                
+            label = str(row[0]).lower() if row[0] else ''
+            value = row[1] if len(row) > 1 else 0
+            
+            try:
+                if isinstance(value, str):
+                    value = value.replace('€', '').replace(',', '.').strip()
+                    numeric_value = float(value) if '.' in value else int(value)
+                else:
+                    numeric_value = float(value) if isinstance(value, (int, float)) else 0
+            except (ValueError, AttributeError):
+                numeric_value = 0
+
+            # Update category counts
+            if 'flotte' in label:
+                data['categories']['FLOTTE'] = numeric_value
+            elif 'chauffeur' in label:
+                data['categories']['CHAUFFEUR'] = numeric_value
+            elif 'transco' in label:
+                data['categories']['TRANSCO'] = numeric_value
+            elif 'dispo' in label:
+                data['categories']['DISPONIBLE'] = numeric_value
+
+            # Update other metrics
+            if 'chauffeur' in label and 'actif' in label:
+                data['active_drivers'] = numeric_value
+            elif 'vehicule' in label and 'total' in label:
+                data['total_vehicles'] = numeric_value
+            elif 'vehicule' in label and 'dispo' in label:
+                data['available_vehicles'] = numeric_value
+            elif any(v in label for v in ['chr', 'corolla', 'kona', 'model 3', 'swace', 'auris', 'isuzu']):
+                if str(row[0]) not in data['vehicle_types']:
+                    data['vehicle_types'].append(str(row[0]))
+            elif 'depart' in label and 'semaine' in label:
+                data['weekly_departures'] = numeric_value
+            elif 'depart' in label and 'jour' in label:
+                data['daily_departures'] = numeric_value
+            elif 'stop' in label and 'semaine' in label:
+                data['weekly_stops'] = numeric_value
+            elif 'stop' in label and 'jour' in label:
+                data['daily_stops'] = numeric_value
+            elif 'ca s-1' in label:
+                data['ca_semaine'] = numeric_value
+            elif label.startswith('ca') and 'semaine' not in label:
+                data['ca_jour'] = numeric_value
+                
+        logger.debug("Parsed Point MC data: {}".format(data))
+    except Exception as e:
+        logger.error("Error parsing Point MC data: {}".format(str(e)))
+        logger.error(traceback.format_exc())
+    return data
+
+@app.route('/point-mc')
+def point_mc():
+    return render_template('point_mc.html')
+
+@app.route('/get_point_mc_data')
+def get_point_mc_data():
+    try:
+        service = get_google_sheets_service()
+        if not service:
+            logger.error("Failed to get Google Sheets service")
+            return jsonify({})
+
+        # Get all sheets to verify POINT MC exists
+        sheets_metadata = service.spreadsheets().get(spreadsheetId=SPREADSHEET_ID).execute()
+        sheet_titles = [sheet['properties']['title'] for sheet in sheets_metadata.get('sheets', [])]
+        logger.debug("Available sheets: {}".format(sheet_titles))
+
+        # Récupérer les données de la feuille POINT MC
+        range_name = "'POINT MC'!B2:D61"  
+        logger.debug("Fetching range: {}".format(range_name))
+        
+        result = service.spreadsheets().values().get(
+            spreadsheetId=SPREADSHEET_ID,
+            range=range_name
+        ).execute()
+        
+        values = result.get('values', [])
+        
+        # Print detailed information about the data
+        logger.debug("\n=== DATA FROM GOOGLE SHEETS ===")
+        logger.debug("Total rows received: {}".format(len(values)))
+        
+        # Filter out empty rows and process the data
+        processed_values = []
+        for i, row in enumerate(values):
+            logger.debug("Row {}: {}".format(i+2, row))  
+            if row and any(cell.strip() for cell in row if isinstance(cell, str)):  
+                processed_values.append(row)
+        
+        logger.debug("\nProcessed rows: {}".format(len(processed_values)))
+        logger.debug("Processed values:")
+        for row in processed_values:
+            logger.debug(row)
+        logger.debug("============================\n")
+
+        return jsonify({'data': processed_values})
+
+    except Exception as e:
+        logger.error("Error fetching Point MC data: {}".format(str(e)))
+        logger.error(traceback.format_exc())
+        return jsonify({})
 
 if __name__ == '__main__':
     # Test connection on startup
