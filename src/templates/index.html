@@ -181,35 +181,6 @@
             font-size: 0.9em;
         }
 
-        .badge {
-            padding: 8px 15px;
-            border-radius: 20px;
-            font-size: 0.85em;
-            font-weight: 500;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        .badge-disponible-fs {
-            background-color: #28a745;
-            color: white;
-        }
-
-        .badge-disponible-mc {
-            background-color: #007bff;
-            color: white;
-        }
-
-        .badge-immo {
-            background-color: #dc3545;
-            color: white;
-        }
-
-        .badge-secondary {
-            background-color: #6c757d;
-            color: white;
-        }
-
         .tables-container {
             display: grid;
             grid-template-columns: 320px 1fr;
@@ -298,11 +269,19 @@
             border-collapse: collapse;
         }
 
+        /* Table base styles */
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            border-spacing: 0;
+        }
+
         .data-table th,
         .data-table td {
             text-align: left;
             padding: 12px;
             border-bottom: 1px solid var(--border);
+            transition: all 0.2s ease;
         }
 
         .data-table th {
@@ -311,6 +290,26 @@
             position: sticky;
             top: 0;
             z-index: 10;
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            letter-spacing: 1px;
+            border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+        }
+
+        /* Column widths */
+        .data-table th:first-child,
+        .data-table td:first-child { width: 30%; }
+
+        .data-table th:nth-child(2),
+        .data-table td:nth-child(2) { width: 40%; }
+
+        .data-table th:last-child,
+        .data-table td:last-child { 
+            width: 30%;
+            text-align: center;
+            display: flex;
+            justify-content: center;
+            align-items: center;
         }
 
         @media (max-width: 768px) {
@@ -322,6 +321,7 @@
                 -webkit-overflow-scrolling: touch;
             }
 
+            /* Mobile table optimizations */
             .data-table {
                 min-width: 100%;
                 font-size: 14px;
@@ -330,65 +330,44 @@
             .data-table th,
             .data-table td {
                 padding: 10px 8px;
+                white-space: nowrap;
             }
 
-            /* Fixed widths for better mobile layout */
+            /* Column widths for mobile */
             .data-table th:first-child,
-            .data-table td:first-child { min-width: 100px; }
+            .data-table td:first-child { width: 30%; min-width: 110px; }
 
             .data-table th:nth-child(2),
-            .data-table td:nth-child(2) { min-width: 130px; }
-
-            .data-table th:nth-child(3),
-            .data-table td:nth-child(3) { min-width: 90px; }
-
-            .data-table th:nth-child(4),
-            .data-table td:nth-child(4) { min-width: 110px; }
-
-            .data-table th:nth-child(5),
-            .data-table td:nth-child(5) { min-width: 110px; }
+            .data-table td:nth-child(2) { width: 40%; min-width: 150px; }
 
             .data-table th:last-child,
-            .data-table td:last-child {
-                min-width: 100px;
-                text-align: center;
-                background: transparent;
+            .data-table td:last-child { 
+                width: 30%; 
+                min-width: 110px;
+                display: flex;
+                justify-content: center;
+                align-items: center;
             }
         }
 
-        .data-table {
-            width: 100%;
-            border-collapse: separate;
-            border-spacing: 0;
-        }
-
-        .data-table th {
-            background: rgba(255, 255, 255, 0.05);
-            color: var(--text);
-            font-weight: 600;
-            text-transform: uppercase;
-            font-size: 0.75rem;
-            letter-spacing: 1px;
-            padding: 16px;
-            text-align: left;
-            border-bottom: 2px solid rgba(255, 255, 255, 0.1);
-        }
-
-        .data-table td {
-            padding: 16px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-            color: var(--text);
-            font-size: 0.9rem;
-            transition: all 0.2s ease;
-        }
-
+        /* Data table hover effects */
         .data-table tbody tr {
             transition: all 0.3s ease;
         }
 
         .data-table tbody tr:hover {
             background: rgba(255, 255, 255, 0.05);
-            transform: scale(1.005);
+            transform: scale(1.002);
+        }
+
+        @media (hover: none) {
+            .data-table tbody tr:hover {
+                transform: none;
+            }
+            
+            .data-table tbody tr:active {
+                background: rgba(255, 255, 255, 0.1);
+            }
         }
 
         /* Category-specific colors with more elegant transparency */
@@ -400,44 +379,6 @@
         .category-row.immo-fs, .category-row.immo-mc { background-color: rgba(108, 117, 125, 0.07); }
         .category-row.dispo-fs, .category-row.dispo-mc { background-color: rgba(253, 126, 20, 0.07); }
 
-        .status-badge {
-            display: inline-flex;
-            align-items: center;
-            padding: 6px 12px;
-            border-radius: 20px;
-            font-size: 0.85rem;
-            font-weight: 500;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        .status-badge.available {
-            background: rgba(40, 167, 69, 0.15);
-            color: #4cd964;
-            border: 1px solid rgba(40, 167, 69, 0.3);
-        }
-
-        .status-badge.maintenance {
-            background: rgba(255, 193, 7, 0.15);
-            color: #ffd60a;
-            border: 1px solid rgba(255, 193, 7, 0.3);
-        }
-
-        .status-badge.busy {
-            background: rgba(220, 53, 69, 0.15);
-            color: #ff3b30;
-            border: 1px solid rgba(220, 53, 69, 0.3);
-        }
-
-        .status-badge.france-service {
-            background-color: rgba(220, 53, 69, 0.15);
-            color: #ff4d4d;
-        }
-
-        .status-badge.mc-auto {
-            background-color: rgba(255, 193, 7, 0.15);
-            color: #ffd700;
-        }
 
         /* Responsive Design with elegant transitions */
         @media (max-width: 1024px) {
@@ -532,6 +473,7 @@
                 padding: 4px;
             }
 
+            /* Compact layout for very small screens */
             .data-table {
                 font-size: 13px;
             }
@@ -541,24 +483,20 @@
                 padding: 8px 6px;
             }
 
-            /* Slightly reduced widths for very small screens */
+            /* Adjust column widths for smallest screens */
             .data-table th:first-child,
             .data-table td:first-child { min-width: 90px; }
 
             .data-table th:nth-child(2),
             .data-table td:nth-child(2) { min-width: 120px; }
 
-            .data-table th:nth-child(3),
-            .data-table td:nth-child(3) { min-width: 80px; }
-
-            .data-table th:nth-child(4),
-            .data-table td:nth-child(4) { min-width: 100px; }
-
-            .data-table th:nth-child(5),
-            .data-table td:nth-child(5) { min-width: 100px; }
-
             .data-table th:last-child,
-            .data-table td:last-child { min-width: 80px; }
+            .data-table td:last-child { 
+                min-width: 80px;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+            }
 
             .search-box {
                 margin: 0;
@@ -725,37 +663,56 @@
             text-align: center;
         }
         
+        /* Badge components with status variations */
         .badge {
-            display: inline-block;
-            padding: 0.25em 0.4em;
-            font-size: 75%;
-            font-weight: 700;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 8px 15px;
+            font-size: 0.85rem;
+            font-weight: 500;
             line-height: 1;
             text-align: center;
             white-space: nowrap;
             vertical-align: baseline;
-            border-radius: 0.25rem;
-            transition: color 0.15s ease-in-out, background-color 0.15s ease-in-out, border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+            border-radius: 20px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            transition: all 0.2s ease-in-out;
+            color: var(--text);
+            border: 1px solid transparent;
         }
-        
-        .badge-disponible-fs {
-            background-color: #28a745;
-            color: #fff;
+
+        /* Status variations using CSS custom properties */
+        .badge-disponible-fs { 
+            background-color: var(--success); 
+            --hover-color: color-mix(in srgb, var(--success) 85%, white);
         }
-        
-        .badge-disponible-mc {
-            background-color: #007bff;
-            color: #fff;
+        .badge-disponible-mc { 
+            background-color: var(--accent); 
+            --hover-color: color-mix(in srgb, var(--accent) 85%, white);
         }
-        
-        .badge-immo {
-            background-color: #dc3545;
-            color: #fff;
+        .badge-immo { 
+            background-color: var(--danger); 
+            --hover-color: color-mix(in srgb, var(--danger) 85%, white);
         }
-        
-        .badge-secondary {
-            background-color: #6c757d;
-            color: #fff;
+        .badge-secondary { 
+            background-color: var(--secondary); 
+            --hover-color: color-mix(in srgb, var(--secondary) 85%, white);
+        }
+
+        /* Badge responsive adjustments */
+        @media (max-width: 768px) {
+            .badge {
+                padding: 6px 12px;
+                font-size: 0.8rem;
+            }
+        }
+
+        @media (hover: hover) {
+            .badge:hover {
+                background-color: var(--hover-color, currentColor);
+            }
         }
         
         .table {
@@ -945,10 +902,7 @@
                         <tr>
                             <th>Type</th>
                             <th>Immatriculation</th>
-                            <th>CUCAR</th>
-                            <th>Service</th>
                             <th>Status</th>
-                            <th>Actions</th>
                         </tr>
                     </thead>
                     <tbody id="vehicleTableBody">
@@ -1130,7 +1084,7 @@
                             // Si aucun véhicule n'est trouvé
                             if (vehicles.length === 0) {
                                 const emptyRow = document.createElement('tr');
-                                emptyRow.innerHTML = '<td colspan="6" class="text-center">Aucun véhicule trouvé</td>';
+                                emptyRow.innerHTML = '<td colspan="3" class="text-center">Aucun véhicule trouvé</td>';
                                 tableBody.appendChild(emptyRow);
                                 return;
                             }
@@ -1145,17 +1099,10 @@
                                 const immatCell = document.createElement('td');
                                 immatCell.textContent = vehicle.immatriculation;
                                 
-                                const cucarCell = document.createElement('td');
-                                cucarCell.textContent = vehicle.cucar || '';
-                                
-                                const serviceCell = document.createElement('td');
-                                serviceCell.textContent = vehicle.service || '';
-                                
                                 const statusCell = document.createElement('td');
                                 const statusBadge = document.createElement('span');
                                 statusBadge.textContent = vehicle.status;
                                 
-                                // Appliquer le style approprié selon le statut
                                 if (vehicle.status === 'Disponible FS') {
                                     statusBadge.className = 'badge badge-disponible-fs';
                                 } else if (vehicle.status === 'Disponible MC') {
@@ -1167,28 +1114,9 @@
                                 }
                                 statusCell.appendChild(statusBadge);
                                 
-                                const actionsCell = document.createElement('td');
-                                actionsCell.className = 'actions-cell';
-                                
-                                const editBtn = document.createElement('button');
-                                editBtn.className = 'btn-action edit';
-                                editBtn.innerHTML = '<i class="bx bx-edit"></i>';
-                                editBtn.title = 'Modifier';
-                                
-                                const deleteBtn = document.createElement('button');
-                                deleteBtn.className = 'btn-action delete';
-                                deleteBtn.innerHTML = '<i class="bx bx-trash"></i>';
-                                deleteBtn.title = 'Supprimer';
-                                
-                                actionsCell.appendChild(editBtn);
-                                actionsCell.appendChild(deleteBtn);
-                                
                                 row.appendChild(typeCell);
                                 row.appendChild(immatCell);
-                                row.appendChild(cucarCell);
-                                row.appendChild(serviceCell);
                                 row.appendChild(statusCell);
-                                row.appendChild(actionsCell);
                                 
                                 tableBody.appendChild(row);
                             });
@@ -1199,7 +1127,7 @@
                         .catch(error => {
                             console.error('Error:', error);
                             const tableBody = document.getElementById('vehicleTableBody');
-                            tableBody.innerHTML = '<tr><td colspan="6" class="text-center">Erreur lors du chargement des données</td></tr>';
+                            tableBody.innerHTML = '<tr><td colspan="3" class="text-center">Erreur lors du chargement des données</td></tr>';
                         });
                 }
 
