@@ -7,6 +7,84 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/boxicons@latest/css/boxicons.min.css" rel="stylesheet">
     <style>
+        /* Touch feedback for active states */
+        .metric-card.active {
+            border-color: var(--accent);
+            background: #353535;
+            box-shadow: 0 0 0 2px var(--accent);
+        }
+
+        /* Make search more prominent */
+        .search-box {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            background: var(--background);
+            padding: 1rem;
+            margin: 0 0 1.5rem 0;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        /* Add swipe indication for tables on mobile */
+        @media (max-width: 768px) {
+            .vehicle-data-container::after,
+            .vehicle-categories-container::after {
+                content: '←  swipe  →';
+                position: absolute;
+                bottom: 10px;
+                left: 50%;
+                transform: translateX(-50%);
+                color: var(--text-secondary);
+                font-size: 0.8rem;
+                opacity: 0.7;
+                pointer-events: none;
+                animation: fadeOut 3s forwards;
+            }
+
+            @keyframes fadeOut {
+                0%, 50% { opacity: 0.7; }
+                100% { opacity: 0; }
+            }
+
+            .vehicle-data-container,
+            .vehicle-categories-container {
+                position: relative;
+                padding-bottom: 40px;
+            }
+        }
+
+        /* Improve table scrolling experience */
+        .vehicle-data-container,
+        .vehicle-categories-container {
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: thin;
+            scroll-behavior: smooth;
+        }
+
+        /* Optimize touch targets */
+        @media (max-width: 480px) {
+            .btn,
+            .badge,
+            .navbar-brand,
+            .metric-card,
+            .vehicle-categories-table td,
+            .data-table td {
+                min-height: 44px;
+                display: flex;
+                align-items: center;
+            }
+
+            .btn-sm {
+                min-width: 44px;
+                justify-content: center;
+            }
+
+            .search-input {
+                height: 50px;
+                font-size: 16px; /* Prevent zoom on iOS */
+            }
+        }
+
         :root {
             --primary: #1a1a1a;
             --secondary: #333333;
@@ -74,8 +152,21 @@
         }
 
         .metric-card.active {
-            border-color: #007bff;
+            border-color: var(--accent);
             background: #353535;
+            position: relative;
+        }
+
+        .metric-card.active::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 40px;
+            height: 3px;
+            background: var(--accent);
+            border-radius: 3px;
         }
 
         .metric-value {
@@ -125,6 +216,25 @@
             gap: 25px;
             margin: 25px 0;
             padding: 0 10px;
+            position: relative;
+        }
+
+        @media (max-width: 768px) {
+            .tables-container {
+                grid-template-columns: 1fr;
+                gap: 1.5rem;
+                padding: 0;
+            }
+
+            .tables-container::before {
+                content: '';
+                position: absolute;
+                top: 0;
+                left: 0;
+                right: 0;
+                height: 1px;
+                background: linear-gradient(to right, transparent, var(--border), transparent);
+            }
         }
 
         .vehicle-categories-container {
@@ -279,106 +389,196 @@
             }
 
             .stats-grid {
-                grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-                gap: 0.8rem;
+                grid-template-columns: repeat(2, 1fr);
+                gap: 1rem;
+            }
+
+            .vehicle-categories-container,
+            .vehicle-data-container {
+                max-width: 100%;
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
             }
         }
 
         @media (max-width: 768px) {
             .metric-card {
                 padding: 1rem;
+                min-height: 90px;
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
             }
 
             .metric-value {
                 font-size: 1.5rem;
+                margin-bottom: 0.3rem;
             }
 
             .metric-label {
-                font-size: 0.8rem;
+                font-size: 0.9rem;
+                font-weight: 500;
             }
 
             .data-table th,
             .data-table td {
                 padding: 12px 8px;
-                font-size: 0.8rem;
+                font-size: 0.9rem;
+                white-space: nowrap;
             }
 
             .navbar {
-                padding: 0.8rem 1rem;
+                padding: 1rem;
             }
 
             .navbar-brand {
-                font-size: 1.2rem;
+                font-size: 1.1rem;
+            }
+
+            .navbar .btn-outline-light {
+                padding: 0.4rem 0.8rem;
+                font-size: 0.9rem;
             }
 
             .vehicle-categories-container {
                 padding: 15px;
+                margin-bottom: 1.5rem;
             }
 
             .vehicle-categories-table td {
-                padding: 10px;
-                font-size: 0.8rem;
+                padding: 12px;
+                font-size: 0.9rem;
             }
 
             .status-badge {
-                padding: 4px 8px;
-                font-size: 0.75rem;
+                padding: 6px 10px;
+                font-size: 0.8rem;
+            }
+
+            .search-box {
+                position: sticky;
+                top: 0;
+                z-index: 100;
+                background: var(--background);
+                padding: 1rem 0;
+                margin: 0 0 1.5rem 0;
             }
         }
 
         @media (max-width: 480px) {
             .stats-grid {
                 grid-template-columns: repeat(2, 1fr);
+                margin: 0 -0.5rem;
+                padding: 0 0.5rem;
+            }
+
+            .metric-card {
+                min-height: 80px;
+                padding: 0.8rem;
             }
 
             .data-table {
-                display: block;
-                overflow-x: auto;
-                -webkit-overflow-scrolling: touch;
-            }
-
-            .data-table thead {
-                white-space: nowrap;
+                font-size: 0.85rem;
             }
 
             .vehicle-data-container {
                 padding: 10px;
+                border-radius: 10px;
             }
 
             .search-box {
-                margin: 10px;
+                margin: 0;
+                padding: 0.8rem;
+                position: sticky;
+                top: 0;
+                background: var(--background);
+                z-index: 100;
             }
 
             .search-input {
-                font-size: 0.9rem;
-                padding: 8px 35px;
+                font-size: 1rem;
+                padding: 0.8rem 2.5rem;
+                height: 45px;
             }
 
             .refresh-btn {
-                padding: 6px;
-                font-size: 1.1rem;
+                width: 40px;
+                height: 40px;
+                padding: 0;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 1.2rem;
+                border-radius: 50%;
+            }
+
+            .navbar .container-fluid {
+                flex-wrap: nowrap;
+            }
+
+            .navbar .d-flex {
+                gap: 0.5rem !important;
+            }
+
+            .navbar .btn-outline-light {
+                padding: 0.35rem 0.6rem;
+                font-size: 0.85rem;
+            }
+
+            .navbar-brand small {
+                display: none;
             }
         }
 
-        /* Amélioration du touch sur mobile */
+        /* Enhanced touch interactions for mobile */
         @media (hover: none) {
+            .metric-card,
+            .vehicle-categories-table tr,
+            .data-table tbody tr {
+                transition: background-color 0.3s ease;
+            }
+
             .metric-card:hover {
                 transform: none;
+                box-shadow: none;
             }
 
             .vehicle-categories-table tr:hover {
                 transform: none;
+                background: transparent;
             }
 
             .data-table tbody tr:hover {
                 transform: none;
+                background: transparent;
             }
 
-            .metric-card:active,
-            .vehicle-categories-table tr:active,
+            .metric-card:active {
+                background: rgba(255, 255, 255, 0.15);
+            }
+
+            .vehicle-categories-table tr:active {
+                background: rgba(255, 255, 255, 0.1);
+            }
+
             .data-table tbody tr:active {
                 background: rgba(255, 255, 255, 0.1);
             }
+
+            .search-input {
+                -webkit-tap-highlight-color: transparent;
+            }
+
+            .btn, 
+            .badge,
+            .navbar-brand {
+                -webkit-tap-highlight-color: rgba(255, 255, 255, 0.1);
+            }
+        }
+
+        /* Add smooth scrolling for better mobile experience */
+        html {
+            scroll-behavior: smooth;
         }
 
         /* Scrollbar styling */
@@ -512,14 +712,84 @@
         }
 
         .btn-sm {
-            padding: 5px 10px;
+            padding: 8px 12px;
             font-size: 0.85em;
-            border-radius: 5px;
-            margin: 0 3px;
+            border-radius: 8px;
+            margin: 0 4px;
+            min-width: 36px;
+            height: 36px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn-sm::after {
+            content: '';
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            pointer-events: none;
+            background-image: radial-gradient(circle, rgba(255, 255, 255, 0.3) 10%, transparent 10.01%);
+            background-repeat: no-repeat;
+            background-position: 50%;
+            transform: scale(10, 10);
+            opacity: 0;
+            transition: transform .3s, opacity .5s;
+        }
+
+        .btn-sm:active::after {
+            transform: scale(0, 0);
+            opacity: .3;
+            transition: 0s;
         }
 
         .actions-cell {
             white-space: nowrap;
+            padding: 8px 12px !important;
+        }
+
+        @media (max-width: 768px) {
+            .actions-cell {
+                position: sticky;
+                right: 0;
+                background: var(--card-bg);
+                box-shadow: -4px 0 8px rgba(0, 0, 0, 0.1);
+            }
+
+            .btn-sm {
+                padding: 10px;
+                margin: 0 2px;
+            }
+        }
+
+        /* Loading animation */
+        .bx-spin {
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        /* Refresh button animation */
+        .refresh-btn.refreshing i {
+            animation: spin 1s linear infinite;
+        }
+
+        .refresh-success {
+            animation: success-pulse 1s ease-out;
+        }
+
+        @keyframes success-pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.2); }
+            100% { transform: scale(1); }
         }
     </style>
 </head>
@@ -632,9 +902,137 @@
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
         <script>
             document.addEventListener('DOMContentLoaded', function() {
-                let currentCategory = 'all';
+                // Add refresh button functionality
+                const refreshBtn = document.querySelector('.refresh-btn');
+                refreshBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    this.classList.add('refreshing');
+                    updateTable().then(() => {
+                        this.classList.remove('refreshing');
+                        this.classList.add('refresh-success');
+                        setTimeout(() => {
+                            this.classList.remove('refresh-success');
+                        }, 1000);
+                    });
+                });
 
-                function updateTable() {
+                let currentCategory = 'all';
+                let searchDebounceTimer;
+                let startY = 0;
+                let pullDistance = 0;
+                const pullThreshold = 60;
+
+                // Enhance search functionality
+                const searchInput = document.querySelector('.search-input');
+                const searchBox = document.querySelector('.search-box');
+                
+                searchInput.addEventListener('focus', () => {
+                    searchBox.style.transform = 'translateY(2px)';
+                    searchBox.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.15)';
+                });
+                
+                searchInput.addEventListener('blur', () => {
+                    searchBox.style.transform = 'translateY(0)';
+                    searchBox.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.2)';
+                });
+                searchInput.addEventListener('input', function() {
+                    clearTimeout(searchDebounceTimer);
+                    searchDebounceTimer = setTimeout(() => {
+                        const searchText = this.value.toLowerCase().trim();
+                        const rows = document.querySelectorAll('#vehicleTableBody tr');
+                        
+                        rows.forEach(row => {
+                            const text = Array.from(row.cells)
+                                .map(cell => cell.textContent.toLowerCase())
+                                .join(' ');
+                            row.style.display = text.includes(searchText) ? '' : 'none';
+                        });
+                    }, 300);
+                });
+
+                // Add pull-to-refresh functionality
+                let refreshIndicator = document.createElement('div');
+                refreshIndicator.style.cssText = `
+                    position: fixed;
+                    top: 0;
+                    left: 0;
+                    width: 100%;
+                    height: 60px;
+                    background: var(--background);
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    transform: translateY(-100%);
+                    transition: transform 0.2s;
+                    z-index: 1000;
+                `;
+                refreshIndicator.innerHTML = '<i class="bx bx-refresh"></i> Pull to refresh';
+                document.body.appendChild(refreshIndicator);
+
+                document.addEventListener('touchstart', e => {
+                    startY = e.touches[0].pageY;
+                    pullDistance = 0;
+                }, { passive: true });
+
+                document.addEventListener('touchmove', e => {
+                    const y = e.touches[0].pageY;
+                    pullDistance = y - startY;
+                    
+                    if (window.scrollY === 0 && pullDistance > 0 && pullDistance <= pullThreshold) {
+                        refreshIndicator.style.transform = `translateY(${pullDistance - 60}px)`;
+                        e.preventDefault();
+                    }
+                }, { passive: false });
+
+                document.addEventListener('touchend', () => {
+                    if (pullDistance >= pullThreshold) {
+                        updateTable();
+                    }
+                    refreshIndicator.style.transform = 'translateY(-100%)';
+                    pullDistance = 0;
+                });
+
+                // Add swipe gesture for table navigation
+                const tables = document.querySelectorAll('.vehicle-data-container, .vehicle-categories-container');
+                tables.forEach(table => {
+                    let touchStartX = 0;
+                    let touchEndX = 0;
+
+                    table.addEventListener('touchstart', e => {
+                        touchStartX = e.changedTouches[0].screenX;
+                    }, { passive: true });
+
+                    table.addEventListener('touchend', e => {
+                        touchEndX = e.changedTouches[0].screenX;
+                        handleSwipe(table);
+                    }, { passive: true });
+
+                    function handleSwipe(element) {
+                        const diffX = touchStartX - touchEndX;
+                        const sensitivity = 50;
+
+                        if (Math.abs(diffX) > sensitivity) {
+                            if (diffX > 0) {
+                                element.scrollLeft += element.offsetWidth / 2;
+                            } else {
+                                element.scrollLeft -= element.offsetWidth / 2;
+                            }
+                        }
+                    }
+                });
+
+                function updateTable(showLoadingIndicator = true) {
+                    if (showLoadingIndicator) {
+                        const loadingRow = document.createElement('tr');
+                        loadingRow.innerHTML = `
+                            <td colspan="6" class="text-center">
+                                <i class='bx bx-loader-alt bx-spin' style="font-size: 1.5rem; margin-right: 8px;"></i>
+                                Chargement...
+                            </td>
+                        `;
+                        document.getElementById('vehicleTableBody').innerHTML = '';
+                        document.getElementById('vehicleTableBody').appendChild(loadingRow);
+                    }
                     fetch('/api/vehicles')
                         .then(response => response.json())
                         .then(data => {
