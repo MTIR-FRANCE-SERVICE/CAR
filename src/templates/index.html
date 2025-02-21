@@ -292,6 +292,87 @@
             padding: 20px;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
             backdrop-filter: blur(10px);
+            overflow: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        @media (max-width: 768px) {
+            .vehicle-data-container {
+                padding: 10px;
+                margin: 0;
+                width: 100%;
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+            }
+
+            .data-table {
+                min-width: 800px; /* Ensure table has minimum width for all columns */
+                border-spacing: 0;
+            }
+
+            .data-table td, 
+            .data-table th {
+                min-width: 100px; /* Give columns minimum width */
+                padding: 12px 8px;
+                white-space: nowrap;
+            }
+
+            /* Adjust column widths for mobile */
+            .data-table th:nth-child(1), /* Type */
+            .data-table td:nth-child(1) {
+                min-width: 120px;
+            }
+
+            .data-table th:nth-child(2), /* Immatriculation */
+            .data-table td:nth-child(2) {
+                min-width: 150px;
+            }
+
+            .data-table th:nth-child(3), /* CUCAR */
+            .data-table td:nth-child(3) {
+                min-width: 100px;
+            }
+
+            .data-table th:nth-child(4), /* Service */
+            .data-table td:nth-child(4) {
+                min-width: 130px;
+            }
+
+            .data-table th:nth-child(5), /* Status */
+            .data-table td:nth-child(5) {
+                min-width: 140px;
+            }
+
+            .data-table th:nth-child(6), /* Actions */
+            .data-table td:nth-child(6) {
+                min-width: 100px;
+                position: sticky;
+                right: 0;
+                background: var(--card-bg);
+                box-shadow: -4px 0 8px rgba(0, 0, 0, 0.15);
+            }
+
+            /* Add fade effect to indicate scrollable content */
+            .vehicle-data-container::before,
+            .vehicle-data-container::after {
+                content: '';
+                position: absolute;
+                top: 0;
+                bottom: 0;
+                width: 15px;
+                pointer-events: none;
+                z-index: 1;
+            }
+
+            .vehicle-data-container::before {
+                left: 0;
+                background: linear-gradient(to right, var(--card-bg), transparent);
+            }
+
+            .vehicle-data-container::after {
+                right: 0;
+                background: linear-gradient(to left, var(--card-bg), transparent);
+            }
         }
 
         .data-table {
