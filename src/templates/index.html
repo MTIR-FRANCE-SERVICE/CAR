@@ -64,14 +64,16 @@
         /* Optimize touch targets */
         @media (max-width: 480px) {
             .btn,
-            .badge,
             .navbar-brand,
-            .metric-card,
-            .vehicle-categories-table td,
-            .data-table td {
+            .metric-card {
                 min-height: 44px;
                 display: flex;
                 align-items: center;
+            }
+
+            .vehicle-categories-table td,
+            .data-table td {
+                min-height: 44px;
             }
 
             .btn-sm {
@@ -304,10 +306,14 @@
         .data-table td:nth-child(2) { width: 40%; }
 
         .data-table th:last-child,
-        .data-table td:last-child { 
+.data-table td:last-child { 
             width: 30%;
             text-align: center;
-            display: flex;
+        }
+
+        /* Center the badge in the status cell */
+        .data-table td:last-child .badge {
+            display: inline-flex;
             justify-content: center;
             align-items: center;
         }
@@ -342,11 +348,8 @@
 
             .data-table th:last-child,
             .data-table td:last-child { 
-                width: 30%; 
-                min-width: 110px;
-                display: flex;
-                justify-content: center;
-                align-items: center;
+                width: 30%;
+                text-align: center;
             }
         }
 
@@ -493,9 +496,7 @@
             .data-table th:last-child,
             .data-table td:last-child { 
                 min-width: 80px;
-                display: flex;
-                justify-content: center;
-                align-items: center;
+                text-align: center;
             }
 
             .search-box {
