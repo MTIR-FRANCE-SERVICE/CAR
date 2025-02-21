@@ -294,6 +294,9 @@
             backdrop-filter: blur(10px);
             overflow: auto;
             -webkit-overflow-scrolling: touch;
+            position: relative;
+            max-height: calc(100vh - 300px);
+            scrollbar-width: thin;
         }
 
         @media (max-width: 768px) {
@@ -301,55 +304,90 @@
                 padding: 10px;
                 margin: 0;
                 width: 100%;
-                overflow-x: auto;
-                -webkit-overflow-scrolling: touch;
+                border-radius: 10px;
+                max-height: calc(100vh - 250px);
             }
 
             .data-table {
-                min-width: 800px; /* Ensure table has minimum width for all columns */
+                min-width: 100%;
                 border-spacing: 0;
+                font-size: 14px;
             }
 
             .data-table td, 
             .data-table th {
-                min-width: 100px; /* Give columns minimum width */
-                padding: 12px 8px;
-                white-space: nowrap;
+                padding: 10px 6px;
             }
 
-            /* Adjust column widths for mobile */
-            .data-table th:nth-child(1), /* Type */
+            /* Optimize column widths for mobile */
+            .data-table th:nth-child(1),
             .data-table td:nth-child(1) {
+                max-width: 80px;
+                min-width: 80px;
+            }
+
+            .data-table th:nth-child(2),
+            .data-table td:nth-child(2) {
+                max-width: 120px;
                 min-width: 120px;
             }
 
-            .data-table th:nth-child(2), /* Immatriculation */
-            .data-table td:nth-child(2) {
-                min-width: 150px;
-            }
-
-            .data-table th:nth-child(3), /* CUCAR */
+            .data-table th:nth-child(3),
             .data-table td:nth-child(3) {
-                min-width: 100px;
+                max-width: 80px;
+                min-width: 80px;
             }
 
-            .data-table th:nth-child(4), /* Service */
+            .data-table th:nth-child(4),
             .data-table td:nth-child(4) {
-                min-width: 130px;
-            }
-
-            .data-table th:nth-child(5), /* Status */
-            .data-table td:nth-child(5) {
-                min-width: 140px;
-            }
-
-            .data-table th:nth-child(6), /* Actions */
-            .data-table td:nth-child(6) {
+                max-width: 100px;
                 min-width: 100px;
+            }
+
+            .data-table th:nth-child(5),
+            .data-table td:nth-child(5) {
+                max-width: 110px;
+                min-width: 110px;
+            }
+
+            .data-table th:nth-child(6),
+            .data-table td:nth-child(6) {
+                max-width: 90px;
+                min-width: 90px;
                 position: sticky;
                 right: 0;
                 background: var(--card-bg);
                 box-shadow: -4px 0 8px rgba(0, 0, 0, 0.15);
+                padding: 10px 4px;
+            }
+
+            /* Improve text handling on small screens */
+            .data-table td,
+            .data-table th {
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+            }
+
+            /* Add horizontal scroll indicator */
+            .vehicle-data-container::after {
+                content: '';
+                position: absolute;
+                bottom: 0;
+                left: 0;
+                right: 0;
+                height: 3px;
+                background: linear-gradient(to right, 
+                    transparent 0%,
+                    var(--accent) 50%,
+                    transparent 100%);
+                opacity: 0.5;
+                animation: scrollIndicator 2s infinite;
+            }
+
+            @keyframes scrollIndicator {
+                0% { transform: translateX(-100%); }
+                100% { transform: translateX(100%); }
             }
 
             /* Add fade effect to indicate scrollable content */
@@ -547,24 +585,54 @@
         }
 
         @media (max-width: 480px) {
-            .stats-grid {
-                grid-template-columns: repeat(2, 1fr);
-                margin: 0 -0.5rem;
-                padding: 0 0.5rem;
-            }
-
-            .metric-card {
-                min-height: 80px;
-                padding: 0.8rem;
+            .vehicle-data-container {
+                padding: 8px;
+                border-radius: 8px;
+                margin: 0;
             }
 
             .data-table {
-                font-size: 0.85rem;
+                font-size: 13px;
             }
 
-            .vehicle-data-container {
-                padding: 10px;
-                border-radius: 10px;
+            .data-table td,
+            .data-table th {
+                padding: 8px 4px;
+            }
+
+            /* Further optimize column widths for very small screens */
+            .data-table th:nth-child(1),
+            .data-table td:nth-child(1) { max-width: 70px; min-width: 70px; }
+            
+            .data-table th:nth-child(2),
+            .data-table td:nth-child(2) { max-width: 100px; min-width: 100px; }
+            
+            .data-table th:nth-child(3),
+            .data-table td:nth-child(3) { max-width: 70px; min-width: 70px; }
+            
+            .data-table th:nth-child(4),
+            .data-table td:nth-child(4) { max-width: 90px; min-width: 90px; }
+            
+            .data-table th:nth-child(5),
+            .data-table td:nth-child(5) { max-width: 90px; min-width: 90px; }
+            
+            .data-table th:nth-child(6),
+            .data-table td:nth-child(6) { max-width: 80px; min-width: 80px; }
+
+            /* Improve touch targets */
+            .btn-sm {
+                min-height: 36px;
+                min-width: 36px;
+            }
+
+            /* Enhance scroll feedback */
+            .vehicle-data-container::-webkit-scrollbar {
+                height: 4px;
+            }
+
+            .vehicle-data-container::-webkit-scrollbar-thumb {
+                background: var(--accent);
+                border-radius: 2px;
             }
 
             .search-box {
